@@ -1,0 +1,137 @@
+# Experiment 1: Probe Configuration
+# Trains probes on frozen Motus tokens to predict action sequences.
+#
+# Each probe_configs entry defines one probe experiment:
+#   - name:           unique identifier
+#   - type:           "linear" | "temporal" | "spatiotemporal"
+#   - feature_key:    which cached token to use (video_before, und_after, etc.)
+#   - feature_dim:    token feature dimension (3072 for video, 512 for und)
+#   - n_frames:       temporal frames (for temporal/spatiotemporal probes)
+#   - n_patches:      spatial patches (for spatiotemporal probe)
+#   - action_dim:     action space dimension (default 14)
+#   - chunk_size:     action prediction horizon (default 16)
+
+# ── Global training settings ──────────────────────────────────────────
+training:
+  epochs: 50
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  batch_size: 16
+
+# ── Token cache settings ──────────────────────────────────────────────
+cache:
+  cache_dir: "probe_cache"
+  force_extract: false
+
+# ── WandB settings ────────────────────────────────────────────────────
+wandb:
+  mode: "disabled"          # "disabled" | "online" | "offline"
+  project: "motus-probe"
+  run_name: "exp1-probe"
+
+# ── Output settings ───────────────────────────────────────────────────
+output:
+  output_dir: "probe_results"
+  save_plots: true
+
+# ── Model settings (for token extraction) ─────────────────────────────
+model:
+  # Paths to Motus model components (adjust to your environment)
+  config_path: "configs/robotwin.yaml"
+  checkpoint_path: null     # Set to checkpoint dir for actual extraction
+
+# ── Data settings ─────────────────────────────────────────────────────
+data:
+  dataset_dir: "/share/dataset/preprocess/robotwin2"
+  subset_names: "robotwin"
+  num_workers: 4
+
+# ── Probe configurations ──────────────────────────────────────────────
+# Experiment matrix from design doc:
+#   V-before-linear, U-before-linear, V-after-linear, U-after-linear,
+#   V+U-before-linear, V-before-temporal, U-before-temporal,
+#   V-before-spatiotemporal
+
+probe_configs:
+  # ── Linear probes: compare token spaces ─────────────────────────────
+  - name: "V_before_linear"
+    type: "linear"
+    feature_key: "video_before"
+    feature_dim: 3072
+    action_dim: 14
+    chunk_size: 16
+
+  - name: "U_before_linear"
+    type: "linear"
+    feature_key: "und_before"
+    feature_dim: 512
+    action_dim: 14
+    chunk_size: 16
+
+  - name: "V_after_linear"
+    type: "linear"
+    feature_key: "video_after"
+    feature_dim: 3072
+    action_dim: 14
+    chunk_size: 16
+
+  - name: "U_after_linear"
+    type: "linear"
+    feature_key: "und_after"
+    feature_dim: 512
+    action_dim: 14
+    chunk_size: 16
+
+  # ── Concatenated probe ──────────────────────────────────────────────
+  - name: "VU_before_linear"
+    type: "linear"
+    feature_key: "video_before"  # Will be concatenated with und_before in training
+    feature_dim: 3584            # 3072 + 512
+    action_dim: 14
+    chunk_size: 16
+    concat_keys: ["video_before", "und_before"]  # Special: concatenate these
+
+  # ── Temporal probes ─────────────────────────────────────────────────
+  - name: "V_before_temporal"
+    type: "temporal"
+    feature_key: "video_before"
+    feature_dim: 3072
+    n_frames: 1
+    action_dim: 14
+    chunk_size: 16
+
+  - name: "U_before_temporal"
+    type: "temporal"
+    feature_key: "und_before"
+    feature_dim: 512
+    n_frames: 1
+    action_dim: 14
+    chunk_size: 16
+
+  # ── Spatiotemporal probe ────────────────────────────────────────────
+  - name: "V_before_spatiotemporal"
+    type: "spatiotemporal"
+    feature_key: "video_before"
+    feature_dim: 3072
+    n_frames: 1
+    n_patches: 64
+    action_dim: 14
+    chunk_size: 16
+
+# ── Ablation configurations (optional) ────────────────────────────────
+# Uncomment to run ablation studies
+#
+# ablation:
+#   # Random gate: replace understanding tokens with random vectors
+#   - name: "U_random_linear"
+#     type: "linear"
+#     feature_key: "und_before"
+#     feature_dim: 512
+#     randomize: true
+#
+#   # Shuffled order: shuffle understanding token sequence
+#   - name: "U_shuffled_linear"
+#     type: "linear"
+#     feature_key: "und_before"
+#     feature_dim: 512
+#     shuffle_order: true
