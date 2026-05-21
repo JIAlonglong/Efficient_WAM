@@ -42,9 +42,15 @@ model:
 
 # ── Data settings ─────────────────────────────────────────────────────
 data:
-  dataset_dir: "/share/dataset/preprocess/robotwin2"
-  subset_names: "robotwin"
+  # Bridge V2 probe 实验使用转换后的 MP4+NPZ（个人目录，不影响共享文件夹）
+  dataset_dir: "/root/intern/jialongliu/datasets/bridge_v2"
+  subset_names: "bridge_v2"
+  split: "train"
   num_workers: 4
+
+  # 如需用 robotwin 数据，切换为：
+  # dataset_dir: "/share/dataset/preprocess/robotwin2"
+  # subset_names: "robotwin"
 
 # ── Probe configurations ──────────────────────────────────────────────
 # Experiment matrix from design doc:
