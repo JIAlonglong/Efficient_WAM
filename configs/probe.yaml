@@ -43,8 +43,7 @@ model:
 # ── Data settings ─────────────────────────────────────────────────────
 data:
   # Bridge V2 probe 实验使用转换后的 MP4+NPZ（个人目录，不影响共享文件夹）
-  dataset_dir: "/root/intern/jialongliu/datasets/bridge_v2"
-  subset_names: "bridge_v2"
+  dataset_dir: "data/bridge_v2_personal"
   split: "train"
   num_workers: 4
 
