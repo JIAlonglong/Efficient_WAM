@@ -4,6 +4,9 @@ MotusProbeDataset extracts tokens from a frozen Motus model once, caches
 them to disk, and serves them as a standard PyTorch Dataset for fast
 probe training.
 
+NpzActionDataset loads pre-converted NPZ action files directly (e.g. Bridge V2),
+useful for testing probe architectures without a Motus model.
+
 Reference: semantic-wm's TrajectoryProbeDataset (probe_dataset.py)
 """
 
@@ -13,6 +16,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -20,6 +24,74 @@ from tqdm import tqdm
 from .extract_motus_tokens import extract_motus_tokens
 
 logger = logging.getLogger(__name__)
+
+
+class NpzActionDataset(Dataset):
+    """Load action sequences from pre-converted NPZ files.
+
+    For Bridge V2 probe experiments: loads actions from converted MP4+NPZ
+    without needing a Motus model. Useful for static debugging and
+    standalone probe experiments.
+
+    Expected NPZ format (from convert_bridge_v2.py):
+        actions: (T, action_dim) float32
+        success: bool scalar
+        language_instruction: str
+
+    Parameters
+    ----------
+    data_dir : str or Path
+        Directory containing NPZ files (e.g. bridge_v2/train/).
+    chunk_size : int
+        Number of action steps per sample (subsampled from episode).
+    action_dim : int or None
+        If set, validate that loaded actions have this dimension.
+    """
+
+    def __init__(
+        self,
+        data_dir: str | Path,
+        chunk_size: int = 16,
+        action_dim: Optional[int] = None,
+    ):
+        super().__init__()
+        self.data_dir = Path(data_dir)
+        self.chunk_size = chunk_size
+
+        self.npz_files = sorted(self.data_dir.glob("*.npz"))
+        if not self.npz_files:
+            raise FileNotFoundError(f"No .npz files found in {data_dir}")
+
+        # Validate action dim on first file
+        sample = np.load(self.npz_files[0], allow_pickle=True)
+        actual_dim = sample["actions"].shape[-1]
+        if action_dim is not None and actual_dim != action_dim:
+            raise ValueError(
+                f"Expected action_dim={action_dim}, got {actual_dim} in {self.npz_files[0]}"
+            )
+        self.action_dim = actual_dim
+
+        # Build index: (file_idx, start_step) for each valid chunk
+        self.index: List[Tuple[int, int]] = []
+        for fi, f in enumerate(self.npz_files):
+            npz = np.load(f, allow_pickle=True)
+            T = npz["actions"].shape[0]
+            for start in range(0, T - chunk_size + 1, chunk_size):
+                self.index.append((fi, start))
+
+        logger.info(
+            "NpzActionDataset: %d episodes, %d chunks (chunk_size=%d, action_dim=%d)",
+            len(self.npz_files), len(self.index), chunk_size, self.action_dim,
+        )
+
+    def __len__(self) -> int:
+        return len(self.index)
+
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        fi, start = self.index[idx]
+        npz = np.load(self.npz_files[fi], allow_pickle=True)
+        actions = npz["actions"][start : start + self.chunk_size]
+        return {"action": torch.from_numpy(actions).float()}
 
 
 class MotusProbeDataset(Dataset):

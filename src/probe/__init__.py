@@ -20,7 +20,7 @@ from .motus_probe import (
     MotusSpatiotemporalProbe,
     create_probe,
 )
-from .motus_probe_dataset import MotusProbeDataset
+from .motus_probe_dataset import MotusProbeDataset, NpzActionDataset
 from .train_action_probe import train_action_probe, train_single_probe
 from .evaluate_probe import evaluate_probe, evaluate_probe_mse_correlation
 from .visualize_probe import (
@@ -40,6 +40,7 @@ __all__ = [
     "create_probe",
     # Dataset
     "MotusProbeDataset",
+    "NpzActionDataset",
     # Training
     "train_action_probe",
     "train_single_probe",
