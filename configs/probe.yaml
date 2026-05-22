@@ -64,28 +64,28 @@ probe_configs:
     type: "linear"
     feature_key: "video_before"
     feature_dim: 3072
-    action_dim: 14
+    action_dim: 10     # Bridge V2: 10D (world_vector3 + rotation3 + gripper1 + base_disp2 + base_rot1)
     chunk_size: 16
 
   - name: "U_before_linear"
     type: "linear"
     feature_key: "und_before"
     feature_dim: 512
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
   - name: "V_after_linear"
     type: "linear"
     feature_key: "video_after"
     feature_dim: 3072
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
   - name: "U_after_linear"
     type: "linear"
     feature_key: "und_after"
     feature_dim: 512
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
   # ── Concatenated probe ──────────────────────────────────────────────
@@ -93,7 +93,7 @@ probe_configs:
     type: "linear"
     feature_key: "video_before"  # Will be concatenated with und_before in training
     feature_dim: 3584            # 3072 + 512
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
     concat_keys: ["video_before", "und_before"]  # Special: concatenate these
 
@@ -103,7 +103,7 @@ probe_configs:
     feature_key: "video_before"
     feature_dim: 3072
     n_frames: 1
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
   - name: "U_before_temporal"
@@ -111,7 +111,7 @@ probe_configs:
     feature_key: "und_before"
     feature_dim: 512
     n_frames: 1
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
   # ── Spatiotemporal probe ────────────────────────────────────────────
@@ -121,7 +121,7 @@ probe_configs:
     feature_dim: 3072
     n_frames: 1
     n_patches: 64
-    action_dim: 14
+    action_dim: 10
     chunk_size: 16
 
 # ── Ablation configurations (optional) ────────────────────────────────
