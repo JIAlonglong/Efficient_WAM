@@ -26,12 +26,12 @@ import functools
 from pathlib import Path
 from typing import Any, Callable, Dict, Tuple
 
+import subprocess
+
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import torch
 from tqdm import tqdm
-from torchvision.io import write_video
 
 
 # ── Paths ─────────────────────────────────────────────────────────────────
@@ -165,9 +165,35 @@ def episode_map_fn(episode, map_step, extract_metadata=None):
 
 # ── Save ──────────────────────────────────────────────────────────────────
 
+def write_video_ffmpeg(frames: np.ndarray, path: str, fps: int = 20) -> None:
+    """Write (T, H, W, 3) uint8 frames to MP4 via ffmpeg subprocess.
+
+    No torchvision/cv2 dependency — uses system ffmpeg via pipe.
+    """
+    T, H, W, C = frames.shape
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "rawvideo",
+        "-vcodec", "rawvideo",
+        "-s", f"{W}x{H}",
+        "-pix_fmt", "rgb24",
+        "-r", str(fps),
+        "-i", "-",
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-preset", "fast",
+        "-crf", "23",
+        path,
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc.communicate(input=frames.tobytes())
+    if proc.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed for {path}")
+
+
 def save_episode(episode: Dict[str, Any], base_path: Path, fps: int) -> None:
-    video = torch.from_numpy(episode["video"])
-    write_video(str(base_path) + ".mp4", video, fps=fps)
+    video = episode["video"]  # (T, H, W, 3) uint8
+    write_video_ffmpeg(video, str(base_path) + ".mp4", fps=fps)
     save_dict = {"actions": episode["action"]}
     if "success" in episode:
         save_dict["success"] = np.array(episode["success"], dtype=np.bool_)
