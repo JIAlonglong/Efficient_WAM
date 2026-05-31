@@ -1,0 +1,123 @@
+{
+  "tg_profile": [
+    8.81075315475464,
+    8.869162130355836,
+    9.544108963012695,
+    7.604512143135071,
+    8.986419558525085,
+    8.852617752552032,
+    9.958609056472778,
+    9.00866084098816
+  ],
+  "num_video_frames": 8,
+  "baseline": {
+    "video_mse": 0.07674059234559535,
+    "video_mse_std": 0.015254006382568474,
+    "action_mse_loss": 7.558424922823906,
+    "action_mse_loss_std": 3.9643411106991784,
+    "action_l2_error": 1.317885372042656,
+    "action_l2_error_std": 0.44006078292356976,
+    "action_mse_std": NaN,
+    "action_mse_std_std": NaN,
+    "action_l2_std": NaN,
+    "action_l2_std_std": NaN
+  },
+  "per_frame": {
+    "frame_0": {
+      "video_mse": 0.08005930669605732,
+      "video_mse_std": 0.03404758401356739,
+      "action_mse_loss": 8.81075315475464,
+      "action_mse_loss_std": 2.1886692037596176,
+      "action_l2_error": 1.4559190154075623,
+      "action_l2_error_std": 0.23133645888907559,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_1": {
+      "video_mse": 0.08617773540318012,
+      "video_mse_std": 0.031219630469272272,
+      "action_mse_loss": 8.869162130355836,
+      "action_mse_loss_std": 1.978498638084693,
+      "action_l2_error": 1.4741641879081726,
+      "action_l2_error_std": 0.22249185682818728,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_2": {
+      "video_mse": 0.07942532449960708,
+      "video_mse_std": 0.016973996827527822,
+      "action_mse_loss": 9.544108963012695,
+      "action_mse_loss_std": 2.9212952923275224,
+      "action_l2_error": 1.5347119927406312,
+      "action_l2_error_std": 0.30573333268296066,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_3": {
+      "video_mse": 0.07127958238124847,
+      "video_mse_std": 0.01211067197951561,
+      "action_mse_loss": 7.604512143135071,
+      "action_mse_loss_std": 1.724986293689674,
+      "action_l2_error": 1.349266916513443,
+      "action_l2_error_std": 0.16885984259947823,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_4": {
+      "video_mse": 0.09121164046227932,
+      "video_mse_std": 0.04358572177593327,
+      "action_mse_loss": 8.986419558525085,
+      "action_mse_loss_std": 3.216618362763296,
+      "action_l2_error": 1.455122470855713,
+      "action_l2_error_std": 0.3071054013214938,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_5": {
+      "video_mse": 0.07701869420707226,
+      "video_mse_std": 0.01334209872004592,
+      "action_mse_loss": 8.852617752552032,
+      "action_mse_loss_std": 3.659124512040624,
+      "action_l2_error": 1.4380518317222595,
+      "action_l2_error_std": 0.3829789736288682,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_6": {
+      "video_mse": 0.09175084680318832,
+      "video_mse_std": 0.025497060471849936,
+      "action_mse_loss": 9.958609056472778,
+      "action_mse_loss_std": 2.315918132662065,
+      "action_l2_error": 1.5504691481590271,
+      "action_l2_error_std": 0.22752465974723157,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    },
+    "frame_7": {
+      "video_mse": 0.06933439970016479,
+      "video_mse_std": 0.01234172476363578,
+      "action_mse_loss": 9.00866084098816,
+      "action_mse_loss_std": 2.3421044720600084,
+      "action_l2_error": 1.4739410281181335,
+      "action_l2_error_std": 0.25157507793812534,
+      "action_mse_std": NaN,
+      "action_mse_std_std": NaN,
+      "action_l2_std": NaN,
+      "action_l2_std_std": NaN
+    }
+  }
+}

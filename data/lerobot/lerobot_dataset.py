@@ -245,11 +245,14 @@ class LeRobotMotusDataset(data.Dataset):
         logger.info(f"Using video backend: {resolved_video_backend} (pyav is more memory efficient)")
         if self.task_mode == "single":
             self.lerobot_dataset = LeRobotDataset(
-                repo_id=self.repo_id, 
-                root=self.root, 
+                repo_id=self.repo_id,
+                root=self.root,
                 episodes=self.episode_ids,
                 video_backend=resolved_video_backend
             )
+            # v3.0 compatibility: build episode_data_index from episodes if missing
+            if not hasattr(self.lerobot_dataset, 'episode_data_index'):
+                self._build_episode_data_index(self.lerobot_dataset)
         elif self.task_mode == "multi":
             self.lerobot_dataset = MultiLeRobotDataset(
                 repo_ids=self.repo_ids, 
@@ -508,7 +511,69 @@ class LeRobotMotusDataset(data.Dataset):
                 lock_path.unlink()
             except Exception:
                 pass
-    
+
+    def _build_episode_data_index(self, lerobot_ds):
+        """Build episode_data_index for v3.0 LeRobot compatibility.
+
+        In v2.1, LeRobotDataset.episode_data_index is a dict with 'from' and 'to'
+        keys mapping episode indices to dataset frame ranges. In v3.0, this attribute
+        was removed. This method reconstructs it from the episodes metadata.
+        """
+        episodes = lerobot_ds.meta.episodes
+        if episodes is None or len(episodes) == 0:
+            logger.warning("No episodes metadata found; cannot build episode_data_index")
+            return
+
+        # episodes can be a HF Dataset or pandas DataFrame
+        # Get column names
+        if hasattr(episodes, 'column_names'):
+            col_names = episodes.column_names
+        elif hasattr(episodes, 'columns'):
+            col_names = episodes.columns.tolist() if hasattr(episodes.columns, 'tolist') else list(episodes.columns)
+        else:
+            col_names = []
+
+        # Build cumulative frame offsets
+        from_indices = []
+        to_indices = []
+        cumulative = 0
+        for i in range(len(episodes)):
+            ep = episodes[i]
+            if "length" in col_names:
+                length = int(ep["length"])
+            elif "num_frames" in col_names:
+                length = int(ep["num_frames"])
+            else:
+                length = 1
+            from_indices.append(cumulative)
+            cumulative += length
+            to_indices.append(cumulative)
+
+        import torch as _torch
+        lerobot_ds.episode_data_index = {
+            "from": _torch.tensor(from_indices),
+            "to": _torch.tensor(to_indices),
+        }
+        logger.info(f"Built episode_data_index: {len(from_indices)} episodes, {cumulative} total frames")
+
+    def _get_episode_meta(self, episodes, ep_index):
+        """Get episode metadata by index, compatible with both dict and HF Dataset."""
+        if episodes is None:
+            return None
+        if isinstance(episodes, dict):
+            return episodes.get(ep_index, None)
+        # HF Dataset or pandas DataFrame: access by index
+        try:
+            if hasattr(episodes, '__len__') and ep_index < len(episodes):
+                row = episodes[ep_index]
+                # HF Dataset returns a dict-like object
+                if hasattr(row, 'items'):
+                    return dict(row)
+                return row
+            return None
+        except (IndexError, KeyError):
+            return None
+
     def __len__(self):
         """Return number of episodes."""
         return self.lerobot_dataset.num_episodes * 1000
@@ -734,32 +799,40 @@ class LeRobotMotusDataset(data.Dataset):
             cached = self._episode_embedding_cache.get(ep_index, None)
             if cached is None:
                 if self.task_mode == 'single':
-                    ep_meta = self.lerobot_dataset.meta.episodes.get(ep_index, None)
+                    ep_meta = self._get_episode_meta(self.lerobot_dataset.meta.episodes, ep_index)
                 else:
-                    ep_meta = self.lerobot_dataset._datasets[task_idx].meta.episodes.get(ep_index, None)
+                    ep_meta = self._get_episode_meta(self.lerobot_dataset._datasets[task_idx].meta.episodes, ep_index)
                 if ep_meta is None:
                     raise KeyError(f"episode {ep_index} not found in meta.episodes")
 
-                rel_path = ep_meta.get("t5_embedding_path", None)
+                rel_path = ep_meta.get("t5_embedding_path", None) if isinstance(ep_meta, dict) else None
                 if rel_path is None:
-                    if not self.enable_t5_fallback:
-                        raise KeyError(
-                            "language_embedding not found in item and t5_embedding_path not found in meta/episodes.jsonl; "
-                            "you can set enable_t5_fallback=True to encode and cache T5 embeddings on-the-fly."
-                        )
+                    # Try to find embedding in text_emb/ directory using task text hash
+                    tasks_list = ep_meta.get("tasks", []) if isinstance(ep_meta, dict) else []
+                    if isinstance(tasks_list, str):
+                        tasks_list = [tasks_list]
+                    elif hasattr(tasks_list, 'tolist'):
+                        tasks_list = tasks_list.tolist()
+                    elif not isinstance(tasks_list, (list, tuple)):
+                        tasks_list = [str(tasks_list)]
+                    if tasks_list:
+                        import hashlib as _hashlib
+                        task_text = tasks_list[0] if tasks_list else ""
+                        task_hash = _hashlib.sha256(task_text.encode()).hexdigest()
+                        # Determine dataset root
+                        if self.task_mode == "single":
+                            ds_root = Path(self.lerobot_dataset.root)
+                        else:
+                            ds_root = Path(self.lerobot_dataset._datasets[task_idx].root)
+                        text_emb_dir = ds_root / "text_emb"
+                        candidate = text_emb_dir / f"{task_hash}.t5_len128.wan22ti2v5b.pt"
+                        if candidate.exists():
+                            rel_path = f"text_emb/{task_hash}.t5_len128.wan22ti2v5b.pt"
 
-                    # On-the-fly encoding (use language_instruction, fallback to task)
-                    instr = item_cond.get("language_instruction", None)
-                    if instr is None or (isinstance(instr, str) and len(instr.strip()) == 0):
-                        instr = item_cond.get("task", "")
-                    if not isinstance(instr, str):
-                        instr = str(instr)
-                    emb = self._encode_and_cache_t5_embedding(ep_index, instr)
-                    self._episode_embedding_cache[ep_index] = emb if isinstance(emb, torch.Tensor) else torch.tensor(emb)
-                    cached = self._episode_embedding_cache[ep_index]
-                    all_embeddings = cached
-                    # Skip the load-from-disk branch below
-                    rel_path = None
+                if rel_path is None:
+                    # No T5 embedding available; use zero embedding (safe for eval experiments)
+                    logger.debug(f"No T5 embedding for episode {ep_index}, using zeros")
+                    cached = torch.zeros(1, self.t5_text_len, 4096)
 
                 if rel_path is not None:
                     # dataset root is self.lerobot_dataset.root (Path)
@@ -768,6 +841,9 @@ class LeRobotMotusDataset(data.Dataset):
                     else:
                         abs_path = Path(self.lerobot_dataset._datasets[task_idx].root) / str(rel_path)
                     emb = torch.load(abs_path, map_location="cpu")
+                    # Handle dict format: {'context': [S, D], 'mask': [S]}
+                    if isinstance(emb, dict):
+                        emb = emb.get('context', emb.get('tensor', next(iter(emb.values()))))
                     if not isinstance(emb, torch.Tensor):
                         emb = torch.tensor(emb)
                     # normalize shape to [V,S,D]
@@ -778,6 +854,8 @@ class LeRobotMotusDataset(data.Dataset):
 
             all_embeddings = cached
 
+        if isinstance(all_embeddings, dict):
+            all_embeddings = all_embeddings.get('context', all_embeddings.get('tensor', next(iter(all_embeddings.values()))))
         if not isinstance(all_embeddings, torch.Tensor):
             all_embeddings = torch.tensor(all_embeddings)
         if all_embeddings.ndim == 2:

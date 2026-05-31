@@ -4,8 +4,8 @@
 # ============================================================================
 # Core Paths - MUST MODIFY THESE
 # ============================================================================
-source_root: "/path/to/robotwin_raw_dataset"     # Source RobotWin dataset root
-target_root: "/path/to/robotwin_dataset"        # Target output directory
+source_root: "/root/intern/jialongliu/projects/Motus/data/robotwin2/raw_dataset/dataset"     # Source RobotWin dataset root
+target_root: "/root/intern/jialongliu/projects/Motus/data/robotwin2/robotwin_dataset"        # Target output directory
 
 # ============================================================================
 # Processing Parameters

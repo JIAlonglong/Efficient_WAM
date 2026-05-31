@@ -54,8 +54,31 @@ class WanVideoModel(nn.Module):
             "bfloat16": torch.bfloat16,
         }[precision]
         
-        # Initialize WAN model
-        self.wan_model = WanModel(**model_config)
+        # Initialize WAN model — map diffusers config keys to WanModel.__init__ params
+        import inspect as _inspect
+        _wan_params = set(_inspect.signature(WanModel.__init__).parameters.keys()) - {"self"}
+
+        # Map diffusers-style keys to WanModel keys
+        _mapped = dict(model_config)
+        if "num_attention_heads" in _mapped and "dim" not in _mapped:
+            _mapped["dim"] = _mapped["num_attention_heads"] * _mapped.get("attention_head_dim", 128)
+        if "num_attention_heads" in _mapped:
+            _mapped.setdefault("num_heads", _mapped["num_attention_heads"])
+        if "in_channels" in _mapped:
+            _mapped.setdefault("in_dim", _mapped["in_channels"])
+        if "out_channels" in _mapped:
+            _mapped.setdefault("out_dim", _mapped["out_channels"])
+        if "num_layers" in _mapped:
+            _mapped.setdefault("num_layers", _mapped["num_layers"])
+
+        _filtered = {k: v for k, v in _mapped.items() if k in _wan_params}
+        _dropped = set(_mapped.keys()) - _wan_params
+        if _dropped:
+            logger.info("Dropped unsupported WanModel config keys: %s", _dropped)
+        logger.info("WanModel config: dim=%s, num_heads=%s, ffn_dim=%s, in_dim=%s, out_dim=%s, num_layers=%s",
+                     _filtered.get("dim"), _filtered.get("num_heads"), _filtered.get("ffn_dim"),
+                     _filtered.get("in_dim"), _filtered.get("out_dim"), _filtered.get("num_layers"))
+        self.wan_model = WanModel(**_filtered)
         self.wan_model.to(device=self.device, dtype=self.precision)
 
         # Initialize VAE

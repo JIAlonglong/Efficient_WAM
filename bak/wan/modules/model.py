@@ -66,7 +66,7 @@ def rope_apply(x: torch.Tensor, grid_sizes: torch.Tensor, freqs: torch.Tensor) -
 
     for g_idx, (f, h, w) in enumerate(uniq.tolist()):
         idx = (inv == g_idx).nonzero(as_tuple=False).squeeze(-1)
-        if idx.numel() == 0: 
+        if idx.numel() == 0:
             continue
         seq_len = f * h * w
 

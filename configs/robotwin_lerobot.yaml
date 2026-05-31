@@ -1,0 +1,120 @@
+# RobotTwin2 config for RobotWin format dataset
+# Used for static-temporal gap analysis experiments
+
+common:
+  # Robot dimensions
+  action_dim: 14         # Robot action dimension (7 joints × 2 arms)
+  state_dim: 14          # Robot state dimension
+
+  # Video settings
+  num_video_frames: 8    # Number of video frames to predict
+  video_height: 384      # Video frame height
+  video_width: 320       # Video frame width
+
+  # Sampling strategy parameters
+  global_downsample_rate: 3     # Global downsampling (e.g., 30Hz -> 20Hz)
+  video_action_freq_ratio: 2    # Video:Action frequency ratio
+
+# Dataset configuration - RobotWin format
+dataset:
+  type: "robotwin"  # Dataset type: "robotwin"
+
+  # RobotWin dataset path
+  dataset_dir: "/root/intern/jialongliu/projects/Motus/data/robotwin2/robotwin_dataset_v2"
+
+  # Data loading settings
+  max_episodes: 20     # Limit episodes for faster eval (null = all)
+  data_mode: "clean"   # "clean", "randomized", or "both"
+
+  # Data augmentation
+  image_aug: false    # Whether to apply image augmentation
+
+# Model configuration
+model:
+  # WAN Video Model settings
+  wan:
+    config_path: "/root/intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/transformer"
+    checkpoint_path: "/root/intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/transformer"
+    vae_path: "/root/intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/vae/diffusion_pytorch_model.safetensors"
+    precision: "bfloat16"
+
+  # VLM settings
+  vlm:
+    checkpoint_path: "/root/intern/jialongliu/projects/Motus/pretrained_models/Qwen3-VL-2B-Instruct"
+    precision: "bfloat16"
+    frozen: true              # Whether to freeze VLM parameters
+
+  # Action Expert configuration
+  action_expert:
+    hidden_size: 1024
+    ffn_dim_multiplier: 4
+    norm_eps: 1e-5
+
+  # Understanding Expert configuration
+  und_expert:
+    hidden_size: 512
+    ffn_dim_multiplier: 4
+    norm_eps: 1e-5
+    vlm:
+      input_dim: 2048
+      projector_type: "mlp3x_silu"
+
+  # Time distribution settings
+  time_distribution:
+    timestep_sample_method: "logit_normal"
+    sigmoid_scale: 1.0
+    min_t: 0.0
+    max_t: 1.0
+
+  # Inference settings
+  inference:
+    num_inference_timesteps: 50  # Override to 50 for experiments
+
+  # Loss weights
+  loss_weights:
+    video_loss_weight: 1.0
+    action_loss_weight: 1.0
+
+  # EMA settings (not used currently)
+  ema:
+    enabled: false
+
+# Training configuration
+training:
+  batch_size: 8
+  max_steps: 1000000
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  scheduler_type: "linear"
+  warmup_steps: 200
+  cycle_length: 5000000
+  f_max: 0.99
+  f_min: 0.4
+  grad_clip_norm: 0.5
+  use_amp: true
+  find_unused_parameters: false
+
+# System settings
+system:
+  checkpoint_dir: "./checkpoints"
+  log_level: "INFO"
+  log_interval: 1
+  save_interval: 5000
+  val_interval: 500
+  num_workers: 16
+  pin_memory: true
+
+# Logging settings
+logging:
+  report_to: "none"  # No logging for eval experiments
+  wandb_project: "motus"
+  tensorboard_log_dir: "tensorboard_logs"
+  run_name: null
+
+# Resume training settings
+resume:
+  checkpoint_path: null
+
+# Finetune settings
+finetune:
+  checkpoint_path: null

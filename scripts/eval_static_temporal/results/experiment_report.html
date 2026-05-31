@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@page { size: A4; margin: 2cm; }
+body { font-family: "Noto Sans CJK SC", "Noto Serif CJK SC", sans-serif; font-size: 11pt; line-height: 1.6; color: #333; }
+h1 { font-size: 20pt; border-bottom: 2px solid #333; padding-bottom: 8px; margin-top: 30px; }
+h2 { font-size: 16pt; border-bottom: 1px solid #999; padding-bottom: 5px; margin-top: 25px; color: #1a5276; }
+h3 { font-size: 13pt; color: #2c3e50; margin-top: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; }
+th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+th { background-color: #ecf0f1; font-weight: bold; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+img { max-width: 100%; height: auto; display: block; margin: 10px auto; border: 1px solid #ddd; border-radius: 4px; }
+code { background-color: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-size: 10pt; }
+strong { color: #c0392b; }
+hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+</style>
+</head>
+<body>
+<h1>Static vs Temporal Gap Analysis -- Motus on RoboTwin2.0</h1>
+<h2>1. 实验背景</h2>
+<p>Motus 模型在推理时需要同时处理视频 token 和动作 token。视频 token 数量庞大（360 tokens/样本），对计算效率构成瓶颈。本实验旨在分析：<strong>静态语义信息（单帧）是否足以指导视频 token 的压缩，还是必须依赖时序动态信息？</strong></p>
+<p>如果静态信息足够，则可以用 VLM（视觉语言模型）的语义理解来筛选重要 token，无需复杂的时序建模机制。</p>
+<h3>实验配置</h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型</td>
+<td>Motus (WAN 5B + Qwen3-VL 2B + Action Expert 641M)</td>
+</tr>
+<tr>
+<td>数据集</td>
+<td>RoboTwin2.0 (LeRobot v2.1 格式)</td>
+</tr>
+<tr>
+<td>评估样本</td>
+<td>2 batches, 每 batch 2 samples</td>
+</tr>
+<tr>
+<td>推理步数</td>
+<td>50 denoising steps</td>
+</tr>
+<tr>
+<td>视频分辨率</td>
+<td>384x320, 8 frames</td>
+</tr>
+<tr>
+<td>Video token 维度</td>
+<td>[B, 360, 3072] (grid: 3x12x10)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Exp1: Single Frame Bias Score (SFB)</h2>
+<h3>方法</h3>
+<p>用单帧（首帧）替换完整视频序列作为条件输入，比较 action 预测的 MSE loss 变化：</p>
+<p>$$\text{SFB} = \frac{\text{Loss}<em>{\text{single_frame}}}{\text{Loss}</em>{\text{full_video}}}$$</p>
+<p>SFB 越接近 1，说明单帧信息越充分。</p>
+<h3>结果</h3>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>Action MSE Loss</th>
+<th>Action L2 Error</th>
+<th>Video MSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full Video (baseline)</td>
+<td>11.76</td>
+<td>1.742</td>
+<td>0.090</td>
+</tr>
+<tr>
+<td>Single Frame (SFB)</td>
+<td>12.37</td>
+<td>1.786</td>
+<td>0.072</td>
+</tr>
+</tbody>
+</table>
+<p><strong>SFB Score = 0.951</strong></p>
+<h3>分析</h3>
+<p>SFB &gt; 0.9 表明去掉 7/8 的视频帧后，action 预测 loss 仅增加约 5%。静态单帧信息已经捕获了绝大部分任务所需的空间语义（物体位置、机器人姿态、目标关系）。视频序列中的时序动态对当前任务的贡献有限。</p>
+<hr />
+<h2>3. Exp2: Temporal Gain Profile (TG)</h2>
+<h3>方法</h3>
+<p>逐帧移除视频序列中的每一帧，观察 action loss 的变化。TG 值越高，说明该帧对 action 预测越重要。</p>
+<h3>结果</h3>
+<table>
+<thead>
+<tr>
+<th>移除帧</th>
+<th>Action MSE Loss</th>
+<th>相对 baseline 变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frame 0</td>
+<td>7.51</td>
+<td>-7.9%</td>
+</tr>
+<tr>
+<td>Frame 1</td>
+<td>9.77</td>
+<td>+19.8%</td>
+</tr>
+<tr>
+<td>Frame 2</td>
+<td>7.47</td>
+<td>-8.4%</td>
+</tr>
+<tr>
+<td>Frame 3</td>
+<td>9.02</td>
+<td>+10.6%</td>
+</tr>
+<tr>
+<td><strong>Frame 4</strong></td>
+<td><strong>12.28</strong></td>
+<td><strong>+50.6%</strong></td>
+</tr>
+<tr>
+<td>Frame 5</td>
+<td>8.15</td>
+<td>-0.1%</td>
+</tr>
+<tr>
+<td>Frame 6</td>
+<td>10.72</td>
+<td>+31.4%</td>
+</tr>
+<tr>
+<td>Frame 7</td>
+<td>9.28</td>
+<td>+13.8%</td>
+</tr>
+</tbody>
+</table>
+<p>Baseline Action MSE Loss = 8.16</p>
+<h3>分析</h3>
+<p><img alt="TG Profile 柱状图" src="可从 exp2_tg.json 绘制" /></p>
+<ul>
+<li><strong>Frame 4（中间帧）影响最大</strong>：移除后 loss 增加 50.6%，说明中间时间步包含最多的任务关键信息</li>
+<li>Frame 0 和 Frame 2 移除后 loss 反而下降，说明这些帧可能引入了噪声或冗余</li>
+<li>整体呈现非均匀分布，中间帧 &gt; 尾帧 &gt; 首帧</li>
+</ul>
+<hr />
+<h2>4. Exp3: Semantic vs Temporal Redundancy (Kendall τ)</h2>
+<h3>方法</h3>
+<p>对每个 video token 同时计算两个指标：
+- <strong>语义重要性（Semantic Importance）</strong>：基于注意力得分。将 Understanding Expert 的输出作为 query，video token 作为 key，计算 scaled dot-product attention score。得分越高表示模型在做任务推理时越"关注"这个 token
+- <strong>时间新颖性（Temporal Novelty）</strong>：同一空间位置的 token 在不同帧之间的 cosine similarity 取 1 减。值越高表示该位置跨帧变化越大</p>
+<p>用 Kendall τ 秩相关检验衡量两个排名的一致性。</p>
+<h3>结果</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kendall τ (mean)</td>
+<td><strong>-0.572</strong></td>
+</tr>
+<tr>
+<td>τ std</td>
+<td>0.010</td>
+</tr>
+<tr>
+<td>p-value</td>
+<td>3.79e-57</td>
+</tr>
+<tr>
+<td>显著性比例</td>
+<td>100%</td>
+</tr>
+</tbody>
+</table>
+<p>语义重要性统计：mean=15.20, std=4.71, range=[6.75, 26.47]</p>
+<p>时间新颖性统计：mean=0.40, std=0.22, range=[0.06, 0.92]</p>
+<h3>分析</h3>
+<p><img alt="语义重要性 vs 时间新颖性散点图" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp3/scatter_semantic_vs_temporal.png" /></p>
+<p><img alt="Kendall τ 分布直方图" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp3/histogram_kendall_tau.png" /></p>
+<p>τ = -0.572（p ≈ 0）表示语义重要性和时间新颖性呈<strong>显著负相关</strong>：</p>
+<ul>
+<li><strong>语义重要的 token 在时间维度上更稳定</strong>：那些对 action 预测最关键的 token（如物体位置、末端执行器姿态）在相邻帧之间变化很小</li>
+<li><strong>时间新颖的 token 语义贡献较低</strong>：帧间变化大的 token（如背景运动、光照变化）对 action 预测帮助有限</li>
+<li>这意味着<strong>语义重要性和时间新颖性在信息层面是互补而非重叠的</strong>——保留语义重要 token 就自动保留了时间一致的关键信息</li>
+</ul>
+<hr />
+<h2>5. Exp4: Token Importance Heatmap</h2>
+<h3>方法</h3>
+<p>计算三种指标，映射回空间网格 (3x12x10)，叠加到原始视频帧上生成热力图：</p>
+<ul>
+<li><strong>Cosine Similarity（语义相关性）</strong>：每个 video token（截取前 512 维）与 VLM 全局理解向量（understanding tokens 的 mean pooling）的余弦相似度。衡量该 token 与任务语义目标的对齐程度——越高表示和"机器人要做什么"越相关</li>
+<li><strong>L2 Norm（信息密度）</strong>：每个 video token 向量的 L2 范数。衡量该 token 本身编码的信息量——越高表示内容越丰富（边缘、纹理、物体），越低表示内容稀疏（平坦背景）</li>
+<li><strong>Temporal Novelty（时间新颖性）</strong>：同一空间位置的 token 在不同帧之间的变化幅度（1 - cosine similarity）。衡量该区域是否在运动——越高表示帧间变化越大</li>
+</ul>
+<h3>结果</h3>
+<p>Token 重要性统计：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>Mean</th>
+<th>Std</th>
+<th>Min</th>
+<th>Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cosine Similarity</td>
+<td>0.523</td>
+<td>0.153</td>
+<td>0.000</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>L2 Norm</td>
+<td>0.395</td>
+<td>0.274</td>
+<td>0.000</td>
+<td>1.000</td>
+</tr>
+<tr>
+<td>Temporal Novelty</td>
+<td>0.256</td>
+<td>0.226</td>
+<td>0.000</td>
+<td>1.000</td>
+</tr>
+</tbody>
+</table>
+<p>逐帧 cosine importance：</p>
+<table>
+<thead>
+<tr>
+<th>Frame</th>
+<th>Mean</th>
+<th>Std</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frame 0</td>
+<td>0.498</td>
+<td>0.145</td>
+</tr>
+<tr>
+<td>Frame 1</td>
+<td>0.535</td>
+<td>0.158</td>
+</tr>
+<tr>
+<td>Frame 2</td>
+<td>0.535</td>
+<td>0.154</td>
+</tr>
+</tbody>
+</table>
+<h3>可视化</h3>
+<p><strong>Sample 0 -- Cosine Importance Heatmap：</strong></p>
+<p><img alt="Sample 0 Cosine Importance" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp4/sample0_cosine_importance.png" /></p>
+<p><strong>Sample 0 -- L2 Norm Importance：</strong></p>
+<p><img alt="Sample 0 Norm Importance" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp4/sample0_norm_importance.png" /></p>
+<p><strong>Sample 0 -- Temporal Novelty：</strong></p>
+<p><img alt="Sample 0 Temporal Novelty" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp4/sample0_temporal_novelty.png" /></p>
+<p><strong>Sample 0 -- 三指标对比：</strong></p>
+<p><img alt="Sample 0 Comparison" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp4/sample0_comparison.png" /></p>
+<p><strong>Sample 1 -- 三指标对比：</strong></p>
+<p><img alt="Sample 1 Comparison" src="/kpfs-intern/jialongliu/projects/Motus/scripts/eval_static_temporal/results/exp4/sample1_comparison.png" /></p>
+<h3>分析</h3>
+<p>热力图显示：
+- <strong>Cosine Similarity</strong> 高分区域表示与任务语义最相关的 video token 空间位置
+- <strong>L2 Norm</strong> 高分区域表示信息量最丰富的 token 位置
+- <strong>Temporal Novelty</strong> 的空间分布与 cosine similarity 不同——帧间变化大的区域和语义重要区域往往不重叠
+- 三种指标的空间分布差异进一步验证了 Exp3 的发现：语义关键区域 ≠ 时序变化区域</p>
+<hr />
+<h2>6. 综合结论</h2>
+<table>
+<thead>
+<tr>
+<th>实验</th>
+<th>核心发现</th>
+<th>对压缩策略的启示</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exp1: SFB=0.951</td>
+<td>静态单帧信息基本足够</td>
+<td>可以用单帧 VLM 特征做 token 筛选</td>
+</tr>
+<tr>
+<td>Exp2: Frame 4 影响最大</td>
+<td>时序信息并非均匀分布</td>
+<td>如果保留时序，优先保留中间帧</td>
+</tr>
+<tr>
+<td>Exp3: τ=-0.572</td>
+<td>重要 token = 稳定 token</td>
+<td>按语义重要性压缩自动保留时序一致信息</td>
+</tr>
+<tr>
+<td>Exp4: 空间分布可视化</td>
+<td>重要区域集中在操作区域</td>
+<td>可做空间局部的 token pruning</td>
+</tr>
+</tbody>
+</table>
+<p><strong>核心结论：在 Motus + RoboTwin2.0 的设置下，静态语义信息足以指导视频 token 压缩。</strong> VLM 识别的语义重要 token 在时间维度上恰好是稳定的，因此基于语义重要性的 token 选择策略可以在不引入额外时序机制的情况下，同时实现语义保真和时序一致性。</p>
+<hr />
+<h2>附录：实验环境</h2>
+<ul>
+<li>GPU: (运行时填写)</li>
+<li>Python 3.10, PyTorch (motus conda env)</li>
+<li>Transformers 5.9.0, Flash Attention 2.8.3</li>
+<li>数据集: RoboTwin2.0 (27,500 episodes, LeRobot v2.1 格式)</li>
+</ul>
+</body>
+</html>

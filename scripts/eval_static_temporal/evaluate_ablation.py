@@ -223,6 +223,98 @@ def evaluate_with_frame_drop(
 
 
 # =========================================================================
+# Convenience wrappers called by run_experiments.py
+# =========================================================================
+
+def run_sfb_experiment(
+    model,
+    dataloader,
+    config,
+    num_eval_batches: int = 2,
+    num_inference_steps: int = 50,
+    device: str = "cuda",
+) -> Dict[str, float]:
+    """
+    Run the Single-Frame Bias (SFB) experiment.
+
+    Returns a dict with at least ``sfb_score``, ``baseline_mse``, ``sfb_mse``.
+    """
+    config.model.inference.num_inference_timesteps = num_inference_steps
+
+    baseline = evaluate_with_frame_drop(
+        model, dataloader, None, config,
+        drop_mode="none",
+        num_eval_batches=num_eval_batches,
+    )
+    sfb = evaluate_with_frame_drop(
+        model, dataloader, None, config,
+        drop_mode="single_frame",
+        replace_value="first",
+        num_eval_batches=num_eval_batches,
+    )
+
+    baseline_mse = baseline.get("action_mse_loss", float("nan"))
+    sfb_mse = sfb.get("action_mse_loss", float("nan"))
+    sfb_score = baseline_mse / sfb_mse if (sfb_mse and sfb_mse > 0) else float("inf")
+
+    return {
+        "sfb_score": sfb_score,
+        "baseline_mse": baseline_mse,
+        "sfb_mse": sfb_mse,
+        "baseline": baseline,
+        "sfb": sfb,
+    }
+
+
+def run_tg_experiment(
+    model,
+    dataloader,
+    config,
+    num_eval_batches: int = 2,
+    num_inference_steps: int = 50,
+    device: str = "cuda",
+) -> Dict[str, float]:
+    """
+    Run the Temporal-Gain (TG) experiment – leave out each frame one at a time.
+
+    Returns a dict with ``tg_profile`` (list of per-frame MSE values) and
+    the full per-frame detail.
+    """
+    config.model.inference.num_inference_timesteps = num_inference_steps
+
+    num_video_frames = (
+        getattr(config.common, "num_video_frames", None)
+        or getattr(getattr(config.model, "wan", None), "num_video_frames", 6)
+    )
+
+    baseline = evaluate_with_frame_drop(
+        model, dataloader, None, config,
+        drop_mode="none",
+        num_eval_batches=num_eval_batches,
+    )
+
+    tg_profile: List[float] = []
+    per_frame: Dict[str, Dict] = {}
+    for t in range(num_video_frames):
+        tg_t = evaluate_with_frame_drop(
+            model, dataloader, None, config,
+            drop_mode="leave_out_N",
+            drop_frame_idx=t,
+            replace_value="first",
+            num_eval_batches=num_eval_batches,
+        )
+        tg_profile.append(tg_t.get("action_mse_loss", float("nan")))
+        per_frame[f"frame_{t}"] = tg_t
+
+    return {
+        "tg_profile": tg_profile,
+        "num_video_frames": num_video_frames,
+        "baseline": baseline,
+        "per_frame": per_frame,
+    }
+
+
+# =========================================================================
 # Function 2: run_sfb_and_tg_experiments
 # =========================================================================
 

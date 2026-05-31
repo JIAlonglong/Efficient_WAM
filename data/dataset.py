@@ -225,13 +225,48 @@ def create_dataset(config: OmegaConf, val: bool = False):
         
         return LeRobotMotusDataset(**params)
 
+    elif dataset_type == 'npz_action':
+        from .npz_action.npz_action_dataset import NpzActionDataset
+
+        params = {}
+
+        # Common parameters
+        if hasattr(config, 'common'):
+            params.update({
+                'global_downsample_rate': config.common.global_downsample_rate,
+                'video_action_freq_ratio': config.common.video_action_freq_ratio,
+                'num_video_frames': config.common.num_video_frames,
+                'video_size': (config.common.video_height, config.common.video_width),
+            })
+
+        # Dataset-specific parameters
+        if hasattr(config.dataset, 'dataset_dir'):
+            params['dataset_dir'] = config.dataset.dataset_dir
+        if hasattr(config.dataset, 'max_episodes'):
+            params['max_episodes'] = config.dataset.max_episodes
+        if hasattr(config.dataset, 'image_aug'):
+            params['image_aug'] = config.dataset.image_aug and not val
+
+        # VLM checkpoint path
+        if hasattr(config.model, 'vlm') and hasattr(config.model.vlm, 'checkpoint_path'):
+            params['vlm_checkpoint_path'] = config.model.vlm.checkpoint_path
+
+        # Additional params from dataset.params
+        if hasattr(config.dataset, 'params'):
+            additional_params = OmegaConf.to_object(config.dataset.params)
+            params.update(additional_params)
+
+        params['val'] = val
+
+        return NpzActionDataset(**params)
+
     # Example: Add more dataset types here
     # elif dataset_type == 'bridge':
-    #     from .bridge_dataset import BridgeDataset  
+    #     from .bridge_dataset import BridgeDataset
     #     return BridgeDataset(**params)
-    
+
     else:
-        raise ValueError(f"Unknown dataset type: {dataset_type}. Available types: robotwin, aloha_agilex_1, ac_one, aloha_agilex_2, table30")
+        raise ValueError(f"Unknown dataset type: {dataset_type}. Available types: robotwin, aloha_agilex_1, ac_one, aloha_agilex_2, table30, npz_action")
 
 
 def _process_vlm_inputs_batch(vlm_inputs: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
@@ -335,5 +370,13 @@ def collate_fn(batch: List[Optional[Dict[str, Any]]]) -> Optional[Dict[str, Any]
 
     if initial_states is not None:
         result['initial_state'] = initial_states
-    
+
+    # Optional: pre-computed video latents (for NpzActionDataset)
+    has_video_latent = all(
+        'video_latent' in sample and sample['video_latent'] is not None
+        for sample in batch
+    )
+    if has_video_latent:
+        result['video_latent'] = torch.stack([sample['video_latent'] for sample in batch])
+
     return result

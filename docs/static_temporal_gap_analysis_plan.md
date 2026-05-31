@@ -1,7 +1,6 @@
 # 静态语义 vs. 时空动态：Token 压缩中的对齐问题分析与验证计划
 
 **问题**：Motus 的 Understanding Expert（QwenVL）只接收 first_frame + text instruction，输出静态语义 tokens。这些 tokens 如何有效引导编码了连续帧间时空变化的 Video Tokens 的压缩？
-
 **日期**：2026-05-22
 
 ---

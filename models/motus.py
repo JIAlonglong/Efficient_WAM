@@ -199,8 +199,9 @@ class VideoModule(nn.Module):
 
     def apply_output_head(self, video_tokens: torch.Tensor, video_time_emb: torch.Tensor) -> torch.Tensor:
         """Apply WAN's head + unpatchify for final video output."""
+        B = video_tokens.shape[0]
         x = self.video_model.wan_model.head(video_tokens, video_time_emb)
-        x = self.video_model.wan_model.unpatchify(x, self.grid_sizes)
+        x = self.video_model.wan_model.unpatchify(x, self.grid_sizes[:B].to(video_tokens.device))
         return torch.stack([u.float() for u in x], dim=0)
 
     def process_joint_attention(
@@ -256,8 +257,10 @@ class VideoModule(nn.Module):
             freqs = freqs.to(self.device)
 
         # Call WAN self-attn with trimodal MoT
+        # Adapt grid_sizes to actual batch size (may differ from pre-computed)
+        grid_sizes = self.grid_sizes[:B].to(self.device)
         y, action_out_h, und_out_h = wan_layer.self_attn(
-            norm_video, seq_lens, self.grid_sizes, freqs,
+            norm_video, seq_lens, grid_sizes, freqs,
             action_q=a_q, action_k=a_k, action_v=a_v,
             und_q=u_q, und_k=u_k, und_v=u_v
         )
@@ -330,7 +333,44 @@ class UndModule(nn.Module):
         adapted_features = self.und_expert.vlm_adapter(last_layer_features)
 
         return adapted_features
-        
+
+    def _build_mm_token_type_ids(self, input_ids: torch.Tensor) -> torch.Tensor:
+        """Build mm_token_type_ids from input_ids for Qwen3-VL >= 5.x.
+
+        Identifies image/video segments by scanning for vision_start/vision_end
+        tokens and marks them as 1 (image) or 2 (video), rest as 0 (text).
+        """
+        # Token IDs from Qwen3-VL config
+        vision_start_token_id = 151652
+        image_token_id = 151655
+        video_token_id = 151656
+
+        B, S = input_ids.shape
+        mm_token_type_ids = torch.zeros(B, S, dtype=torch.int32, device=input_ids.device)
+
+        for b in range(B):
+            ids = input_ids[b].tolist()
+            in_image = False
+            in_video = False
+            for i, tid in enumerate(ids):
+                if tid == vision_start_token_id:
+                    # Look ahead to determine modality
+                    if i + 1 < S and ids[i + 1] == video_token_id:
+                        in_video = True
+                    else:
+                        in_image = True
+                    mm_token_type_ids[b, i] = 0  # vision_start itself is text
+                elif tid == 151653:  # vision_end token
+                    in_image = False
+                    in_video = False
+                    mm_token_type_ids[b, i] = 0
+                elif in_image:
+                    mm_token_type_ids[b, i] = 1
+                elif in_video:
+                    mm_token_type_ids[b, i] = 2
+
+        return mm_token_type_ids
+
     def _process_vlm_inputs_to_tokens(self, vlm_inputs, B: int) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor], Optional[list], torch.Tensor]:
         """Convert VLM inputs to tokens.
 
@@ -381,7 +421,13 @@ class UndModule(nn.Module):
         inputs_embeds = self.vlm_model.get_input_embeddings()(input_ids_batch)
 
         # Process images - handle different return formats between Qwen2.5-VL and Qwen3-VL
-        image_embeds, deepstack_image_embeds = self.vlm_model.get_image_features(pixel_values_batch, image_grid_thw_batch)
+        image_features_output = self.vlm_model.get_image_features(pixel_values_batch, image_grid_thw_batch)
+        if isinstance(image_features_output, tuple):
+            image_embeds, deepstack_image_embeds = image_features_output
+        else:
+            # transformers >= 5.x: returns BaseModelOutputWithDeepstackFeatures
+            image_embeds = image_features_output.pooler_output
+            deepstack_image_embeds = getattr(image_features_output, 'deepstack_features', None)
 
         image_embeds = torch.cat(image_embeds, dim=0).to(self.device, self.dtype)
 
@@ -394,7 +440,6 @@ class UndModule(nn.Module):
         visual_pos_masks = image_mask[..., 0]  # [B, seq_len] - visual positions only
 
         # Compute position_ids (position_ids remains as original: [3, B, seq_len])
-        # Qwen3-VL get_rope_index has different signature: (input_ids, image_grid_thw, video_grid_thw, attention_mask)
         position_ids, _rope_deltas = self.vlm_model.model.get_rope_index(
             input_ids=input_ids_batch,
             image_grid_thw=image_grid_thw_batch,

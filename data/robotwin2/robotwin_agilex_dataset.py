@@ -172,46 +172,47 @@ class RobotWinTaskDataset(data.Dataset):
     def _scan_task_folder(self, task_path: Path) -> List[str]:
         """
         Scan a single task folder.
-        
+
         Args:
             task_path: Path to task folder (e.g., .../clean/adjust_bottle)
-            
+
         Returns:
             List of valid episode identifiers
         """
         qpos_dir = task_path / "qpos"
         videos_dir = task_path / "videos"
         umt5_dir = task_path / "umt5_wan"
-        
-        # Check if all required directories exist
-        if not all([qpos_dir.exists(), videos_dir.exists(), umt5_dir.exists()]):
+
+        # Check if required directories exist (umt5_wan is optional)
+        if not all([qpos_dir.exists(), videos_dir.exists()]):
             logger.warning(f"Missing data directories in {task_path}")
             return []
-        
-        # Find valid episodes (those that have all three data types)
+
+        has_umt5 = umt5_dir.exists()
+
+        # Find valid episodes (those that have all required data types)
         valid_episodes = []
-        
+
         # Get all qpos files as base (.pt format)
         qpos_files = list(qpos_dir.glob("*.pt"))
-        
+
         for qpos_file in qpos_files:
             episode_name = qpos_file.stem
-            
-            # Check if corresponding video and language files exist
+
+            # Check if corresponding video file exists
             video_file = videos_dir / f"{episode_name}.mp4"
-            lang_file = umt5_dir / f"{episode_name}.pt"
-            
-            if video_file.exists() and lang_file.exists():
+
+            if video_file.exists():
                 # Store full paths
                 episode_data = {
                     'episode_name': episode_name,
                     'task_name': task_path.name,
                     'qpos_path': str(qpos_file),
                     'video_path': str(video_file),
-                    'lang_path': str(lang_file),
+                    'lang_path': str(umt5_dir / f"{episode_name}.pt") if has_umt5 else None,
                 }
                 valid_episodes.append(episode_data)
-        
+
         logger.info(f"Task {task_path.name} ({task_path.parent.name}): Found {len(valid_episodes)} valid episodes")
         return valid_episodes
     
@@ -337,19 +338,23 @@ class RobotWinTaskDataset(data.Dataset):
     
     def _load_language_embedding(self, lang_path: str) -> tuple[torch.Tensor, int]:
         """Load pre-encoded language embedding and return the selected index."""
+        if lang_path is None:
+            # Return zero tensor if no language embedding available
+            return torch.zeros(128, 4096, dtype=torch.float32), 0
+
         try:
             embedding_data = torch.load(lang_path, map_location='cpu')
-            
+
             # RobotWin embedding is always a list of tensors
             selected_idx = random.randint(0, len(embedding_data) - 1)
             embeddings = embedding_data[selected_idx]  # [seq_len, 4096]
-            
+
             # Remove batch dimension if present
             if embeddings.dim() == 3:
                 embeddings = embeddings.squeeze(0)
-            
+
             return embeddings, selected_idx
-            
+
         except Exception as e:
             logger.error(f"Error loading language embedding from {lang_path}: {e}")
             raise

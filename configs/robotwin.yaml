@@ -20,7 +20,7 @@ dataset:
   type: "robotwin"  # Dataset type: "robotwin"
   
   # Dataset paths
-  dataset_dir: "/share/dataset/preprocess/robotwin2"
+  dataset_dir: "/root/intern/jialongliu/projects/Motus/data/shared_datasets/robotwin_fastwam/robotwin2.0"
   
   # RobotWin specific parameters
   data_mode: "both"  # "clean", "randomized", or "both"
@@ -39,14 +39,14 @@ dataset:
 model:
   # WAN Video Model settings
   wan:
-    config_path: "/share/home/bhz/pretrained_models/Wan2.2-TI2V-5B"
-    checkpoint_path: "/share/home/bhz/pretrained_models/Wan2.2-TI2V-5B"
-    vae_path: "/share/home/bhz/pretrained_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
+    config_path: "/kpfs-intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/transformer"
+    checkpoint_path: "/kpfs-intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/transformer"
+    vae_path: "/kpfs-intern/jialongliu/projects/Motus/pretrained_models/Wan2.2-TI2V-5B-Diffusers/vae/diffusion_pytorch_model.safetensors"
     precision: "bfloat16"
   
   # VLM settings
   vlm:
-    checkpoint_path: "/share/home/bhz/pretrained_models/Qwen3-VL-2B-Instruct"
+    checkpoint_path: "/kpfs-intern/jialongliu/projects/Motus/pretrained_models/Qwen3-VL-2B-Instruct"
     precision: "bfloat16"
     frozen: true              # Whether to freeze VLM parameters
   

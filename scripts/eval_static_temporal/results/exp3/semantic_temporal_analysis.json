@@ -1,0 +1,73 @@
+{
+  "config_path": "configs/robotwin_lerobot.yaml",
+  "checkpoint_path": "pretrained_models/Motus_robotwin2",
+  "num_batches": 10,
+  "total_samples": 10,
+  "tokens_per_sample": 360,
+  "grid_sizes_sample": [
+    3,
+    12,
+    10
+  ],
+  "losses": [
+    {
+      "video_loss": 0.26984134316444397,
+      "action_loss": 12.8125
+    },
+    {
+      "video_loss": 0.18069913983345032,
+      "action_loss": 14.4375
+    },
+    {
+      "video_loss": 0.867547333240509,
+      "action_loss": 6.78125
+    },
+    {
+      "video_loss": 0.18295106291770935,
+      "action_loss": 38.75
+    },
+    {
+      "video_loss": 0.15226547420024872,
+      "action_loss": 12.375
+    },
+    {
+      "video_loss": 0.306497186422348,
+      "action_loss": 8.0
+    },
+    {
+      "video_loss": 0.19256749749183655,
+      "action_loss": 9.5625
+    },
+    {
+      "video_loss": 0.24098347127437592,
+      "action_loss": 16.875
+    },
+    {
+      "video_loss": 0.2457839399576187,
+      "action_loss": 20.625
+    },
+    {
+      "video_loss": 0.5006141662597656,
+      "action_loss": 7.03125
+    }
+  ],
+  "semantic_importance_stats": {
+    "mean": 0.4979836642742157,
+    "std": 0.0038687956985086203,
+    "min": 0.4813229441642761,
+    "max": 0.5169291496276855
+  },
+  "temporal_novelty_stats": {
+    "mean": 0.5857725739479065,
+    "std": 0.3451980650424957,
+    "min": 0.005859375,
+    "max": 1.134765625
+  },
+  "kendall_tau": {
+    "mean_tau": 0.008826495325848708,
+    "std_tau": 0.06705637163286127,
+    "median_tau": 0.003408227760533202,
+    "mean_p_value": 0.2961481792443622,
+    "significant_ratio": 0.4
+  }
+}

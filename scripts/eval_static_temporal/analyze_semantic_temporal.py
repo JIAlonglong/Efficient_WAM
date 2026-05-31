@@ -201,6 +201,53 @@ def compute_semantic_importance_from_attn(
         return video_tokens.float().norm(dim=-1)
 
 
+def compute_semantic_importance_cosine(
+    video_tokens: torch.Tensor,
+    und_tokens: torch.Tensor,
+    grid_sizes: torch.Tensor,
+) -> torch.Tensor:
+    """
+    Compute per-video-token semantic importance via cosine similarity
+    with the global understanding feature.
+
+    Projects video tokens to the understanding dimension (512) by
+    truncation, then computes cosine similarity with the mean understanding
+    token.  This gives a *semantic* importance signal: tokens whose
+    representation is more aligned with the language-conditioned features
+    score higher.
+
+    This is more stable than the ablation method, which produces near-zero
+    importance values when ablating individual tokens (the loss change is
+    smaller than bfloat16 numerical noise).
+
+    Args:
+        video_tokens: [B, N, C_wan]  — video tokens (before or after joint attn).
+        und_tokens:   [B, L, C_und]  — understanding tokens.
+        grid_sizes:   [B, 3]         — each row is (T, H, W).
+
+    Returns:
+        importance: [B, N]  — higher = more semantically important, values in [0, 1].
+    """
+    B, N, D = video_tokens.shape
+
+    # Global understanding feature (mean pool over sequence)
+    und_global = und_tokens.float().mean(dim=1)  # [B, C_und]
+
+    # Truncate video tokens to C_und dims (simple projection proxy)
+    C_und = und_global.shape[-1]
+    video_proj = video_tokens[:, :, :C_und].float()  # [B, N, C_und]
+
+    # Cosine similarity per token
+    similarity = F.cosine_similarity(
+        video_proj, und_global.unsqueeze(1), dim=-1
+    )  # [B, N]
+
+    # Scale from [-1, 1] to [0, 1]
+    importance = (similarity + 1.0) / 2.0
+
+    return importance
+
+
 def compute_temporal_novelty(
     video_tokens: torch.Tensor,
     grid_sizes: torch.Tensor,
@@ -336,7 +383,7 @@ def plot_analysis(
     ax.plot(x_line, slope * x_line + intercept, "r-", linewidth=2,
             label=f"OLS: slope={slope:.4f}, R={r_val:.3f}, p={p_val:.2e}")
 
-    ax.set_xlabel("Semantic Importance (L2 norm)", fontsize=12)
+    ax.set_xlabel("Semantic Importance (cosine sim with understanding)", fontsize=12)
     ax.set_ylabel("Temporal Novelty (1 - cosine sim)", fontsize=12)
     ax.set_title(
         f"Semantic Importance vs Temporal Novelty\n"
@@ -354,7 +401,8 @@ def plot_analysis(
     # --- Plot 2: Kendall tau histogram ---
     tau_values = [s["tau"] for s in tau_result["per_sample"]]
     fig, ax = plt.subplots(figsize=(7, 5))
-    ax.hist(tau_values, bins=30, color="darkorange", edgecolor="black", alpha=0.8)
+    n_bins = min(30, max(5, len(tau_values) // 2))
+    ax.hist(tau_values, bins=n_bins, color="darkorange", edgecolor="black", alpha=0.8)
     ax.axvline(tau_result["mean_tau"], color="red", linestyle="--", linewidth=2,
                label=f"Mean = {tau_result['mean_tau']:.4f}")
     ax.axvline(0, color="gray", linestyle=":", linewidth=1)
@@ -676,13 +724,11 @@ def run_analysis(args: argparse.Namespace):
 
             features = extract_features_with_hooks(model, batch, device=device, dtype=dtype)
 
-            # Compute semantic importance
-            semantic_imp = compute_semantic_importance_from_attn(
+            # Compute semantic importance via cosine similarity with understanding tokens
+            semantic_imp = compute_semantic_importance_cosine(
                 video_tokens=features["video_tokens_before"],
                 und_tokens=features["und_tokens"],
-                und_block_wan_und_qkv=model.und_expert.blocks[0].wan_und_qkv,
-                und_block_wan_und_norm_q=model.und_expert.blocks[0].wan_und_norm_q,
-                und_block_wan_und_norm_k=model.und_expert.blocks[0].wan_und_norm_k,
+                grid_sizes=features["grid_sizes"],
             )
 
             # Compute temporal novelty

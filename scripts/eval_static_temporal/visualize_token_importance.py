@@ -142,7 +142,7 @@ def compute_token_importance_with_projection(
 def create_heatmap_overlay(
     frame_image: np.ndarray,
     importance_map: np.ndarray,
-    alpha: float = 0.5,
+    alpha: float = 0.65,
     colormap: str = "jet",
 ) -> np.ndarray:
     """Overlay an importance heatmap on the original frame.
@@ -151,7 +151,7 @@ def create_heatmap_overlay(
     ----------
     frame_image : [H_img, W_img, 3]  uint8, RGB
     importance_map : [H, W]  float, values in [0, 1]
-    alpha : overlay transparency
+    alpha : overlay transparency (higher = more visible heatmap)
     colormap : matplotlib colormap name
 
     Returns
@@ -164,7 +164,7 @@ def create_heatmap_overlay(
 
     # Resize importance map to match frame size
     importance_resized = cv2.resize(
-        importance_map, (W_img, H_img), interpolation=cv2.INTER_BILINEAR
+        importance_map, (W_img, H_img), interpolation=cv2.INTER_LINEAR
     )
 
     # Normalise to [0, 1]
@@ -176,8 +176,12 @@ def create_heatmap_overlay(
     cmap = plt.get_cmap(colormap)
     heatmap = cmap(importance_resized)[:, :, :3]  # [H, W, 3], float [0, 1]
 
+    # Lighten the frame first to improve contrast with overlay
+    frame_float = frame_image.astype(np.float32) / 255.0
+    frame_light = np.clip(frame_float * 0.7 + 0.15, 0, 1)  # lighten dark frames
+
     # Blend
-    overlay = (1.0 - alpha) * (frame_image.astype(np.float32) / 255.0) + alpha * heatmap
+    overlay = (1.0 - alpha) * frame_light + alpha * heatmap
     overlay = np.clip(overlay * 255.0, 0, 255).astype(np.uint8)
 
     return overlay
@@ -219,7 +223,7 @@ def create_temporal_importance_grid(
         axes[0, t].axis("off")
 
         # Row 1: raw heatmap
-        im = axes[1, t].imshow(importance_maps[t], cmap="jet", vmin=0, vmax=1)
+        im = axes[1, t].imshow(importance_maps[t], cmap="YlOrRd", vmin=0, vmax=1)
         axes[1, t].set_title("Importance Map", fontsize=13)
         axes[1, t].axis("off")
 
@@ -267,7 +271,7 @@ def create_comparison_grid(
 
     n = min(len(frames), max_frames)
     row_labels = ["Semantic", "Temporal Novelty", "Random"]
-    colormaps = ["Blues", "Reds", "Greens"]
+    colormaps = ["YlOrRd", "YlGnBu", "Greens"]
     importance_groups = [semantic_imp, temporal_novelty, None]
 
     fig, axes = plt.subplots(3, n, figsize=(5 * n, 15))
@@ -445,19 +449,17 @@ def run_visualization(
 
     model = model.to(device).eval()
 
-    # ── Compute latent grid sizes (after patch_embedding) ──────────────────
-    lat_T = 1 + config.common.num_video_frames // 4
-    lat_H = config.common.video_height // 32
-    lat_W = config.common.video_width // 32
-    # After patch_embedding Conv3d(kernel=(1,2,2), stride=(1,2,2))
-    grid_T = lat_T          # temporal unchanged
-    grid_H = lat_H // 2     # spatial halved
-    grid_W = lat_W // 2     # spatial halved
+    # ── Compute grid sizes (after VAE 16x spatial + patch_embedding 2x) ───
+    # VAE spatial downsample: 16x, temporal: 4x
+    # patch_embedding Conv3d(kernel=(1,2,2), stride=(1,2,2)): 2x spatial
+    # Total: 32x spatial, 4x temporal
+    grid_T = 1 + config.common.num_video_frames // 4
+    grid_H = config.common.video_height // 32   # 384//32 = 12
+    grid_W = config.common.video_width // 32    # 320//32 = 10
     grid_sizes = (grid_T, grid_H, grid_W)
     N = grid_T * grid_H * grid_W
     logger.info(
-        f"Latent grid: T={lat_T}, H={lat_H}, W={lat_W} | "
-        f"After patch: T={grid_T}, H={grid_H}, W={grid_W}, N={N}"
+        f"Grid sizes: T={grid_T}, H={grid_H}, W={grid_W}, N={N}"
     )
 
     # ── Dataset ────────────────────────────────────────────────────────────

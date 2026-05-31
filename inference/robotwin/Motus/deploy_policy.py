@@ -17,9 +17,13 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 
-# Add model paths
-sys.path.append(str(Path(__file__).parent))
-sys.path.append(str(Path(__file__).parent / "models"))
+# Add model paths (insert at beginning to avoid conflicts with project root's utils)
+_policy_dir = str(Path(__file__).parent)
+if _policy_dir not in sys.path:
+    sys.path.insert(0, _policy_dir)
+_models_dir = str(Path(__file__).parent / "models")
+if _models_dir not in sys.path:
+    sys.path.insert(0, _models_dir)
 
 from models.motus import Motus, MotusConfig
 
@@ -391,35 +395,57 @@ def encode_obs(observation):
 def get_model(usr_args):
     """
     Initialize Motus model.
-    
+
+    If env var MOTUS_INJECTOR_CKPT is set, loads memory-augmented policy
+    from deploy_policy_memory.py instead of the baseline policy.
+
     Args:
         usr_args: Arguments from eval script (must include wan_path and vlm_path)
     """
     checkpoint_path = usr_args.get('ckpt_setting')
-    wan_path = usr_args.get('wan_path')  # Passed from eval.sh or auto_eval.sh
-    vlm_path = usr_args.get('vlm_path')  # Passed from eval.sh or auto_eval.sh
-    
+    wan_path = usr_args.get('wan_path')
+    vlm_path = usr_args.get('vlm_path')
+
     if not wan_path:
         raise ValueError("wan_path not provided in usr_args")
-    
     if not vlm_path:
         raise ValueError("vlm_path not provided in usr_args")
-    
+
     policy_dir = Path(__file__).parent
     config_path = policy_dir / "utils" / "robotwin.yml"
-    
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    
-    policy = MotusPolicy(
-        checkpoint_path=checkpoint_path,
-        wan_path=wan_path,
-        vlm_path=vlm_path,
-        config_path=str(config_path),
-        device=device,
-        log_dir=usr_args.get('log_dir'),
-        task_name=usr_args.get('task_name')
-    )
-    
+
+    # Check for memory-augmented mode via environment variable
+    injector_ckpt = os.environ.get('MOTUS_INJECTOR_CKPT')
+    if injector_ckpt:
+        logger.info(f"Memory-augmented mode: injector={injector_ckpt}")
+        from deploy_policy_memory import MotusPolicyMemory
+        bank_size = int(os.environ.get('MOTUS_BANK_SIZE', '5'))
+        top_k = int(os.environ.get('MOTUS_TOP_K', '5'))
+        use_soft = os.environ.get('MOTUS_USE_SOFT', '0') == '1'
+
+        policy = MotusPolicyMemory(
+            checkpoint_path=checkpoint_path,
+            wan_path=wan_path,
+            vlm_path=vlm_path,
+            config_path=str(config_path),
+            injector_checkpoint=injector_ckpt,
+            bank_size=bank_size, top_k=top_k, use_soft=use_soft,
+            device=device,
+            log_dir=usr_args.get('log_dir'),
+            task_name=usr_args.get('task_name'),
+        )
+    else:
+        policy = MotusPolicy(
+            checkpoint_path=checkpoint_path,
+            wan_path=wan_path,
+            vlm_path=vlm_path,
+            config_path=str(config_path),
+            device=device,
+            log_dir=usr_args.get('log_dir'),
+            task_name=usr_args.get('task_name'),
+        )
+
     return policy
 
 

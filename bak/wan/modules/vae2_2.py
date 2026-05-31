@@ -1,11 +1,17 @@
 # Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import logging
+import os
 
 import torch
 import torch.cuda.amp as amp
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
+
+try:
+    from safetensors.torch import load_file as safe_load_file
+except ImportError:
+    safe_load_file = None
 
 __all__ = [
     "Wan2_2_VAE",
@@ -879,8 +885,13 @@ def _video_vae(pretrained_path=None, z_dim=16, dim=160, device="cpu", **kwargs):
 
     # load checkpoint
     logging.info(f"loading {pretrained_path}")
-    model.load_state_dict(
-        torch.load(pretrained_path, map_location=device), assign=True)
+    if pretrained_path.endswith('.safetensors'):
+        if safe_load_file is None:
+            raise RuntimeError("safetensors not installed. Please 'pip install safetensors'.")
+        state_dict = safe_load_file(pretrained_path, device=device)
+    else:
+        state_dict = torch.load(pretrained_path, map_location=device)
+    model.load_state_dict(state_dict, assign=True)
 
     return model
 
@@ -1011,18 +1022,48 @@ class Wan2_2_VAE:
         )
         self.scale = [mean, 1.0 / std]
 
-        # init model
-        self.model = (
-            _video_vae(
-                pretrained_path=vae_pth,
-                z_dim=z_dim,
-                dim=c_dim,
-                dim_mult=dim_mult,
-                temperal_downsample=temperal_downsample,
-            ).eval().requires_grad_(False).to(device))
+        # init model — try diffusers AutoencoderKLWan first (for safetensors / diffusers dir),
+        # fall back to custom WanVAE_ for legacy .pt checkpoints.
+        if vae_pth and (vae_pth.endswith('.safetensors') or os.path.isdir(vae_pth)):
+            try:
+                from diffusers import AutoencoderKLWan as _DiffusersWanVAE
+                if os.path.isdir(vae_pth):
+                    self.model = _DiffusersWanVAE.from_pretrained(vae_pth)
+                else:
+                    # Load from a single safetensors file via its parent dir's config.json
+                    vae_dir = os.path.dirname(vae_pth)
+                    self.model = _DiffusersWanVAE.from_pretrained(vae_dir)
+                self.model = self.model.eval().requires_grad_(False).to(device)
+                self._diffusers_vae = True
+                logging.info("Loaded VAE via diffusers AutoencoderKLWan")
+            except Exception as e:
+                logging.warning("diffusers VAE load failed (%s), falling back to custom WanVAE_", e)
+                self.model = (
+                    _video_vae(
+                        pretrained_path=vae_pth,
+                        z_dim=z_dim,
+                        dim=c_dim,
+                        dim_mult=dim_mult,
+                        temperal_downsample=temperal_downsample,
+                    ).eval().requires_grad_(False).to(device))
+                self._diffusers_vae = False
+        else:
+            self.model = (
+                _video_vae(
+                    pretrained_path=vae_pth,
+                    z_dim=z_dim,
+                    dim=c_dim,
+                    dim_mult=dim_mult,
+                    temperal_downsample=temperal_downsample,
+                ).eval().requires_grad_(False).to(device))
+            self._diffusers_vae = False
 
     def encode(self, videos):
         with torch.amp.autocast("cuda", dtype=self.dtype):
+            if getattr(self, '_diffusers_vae', False):
+                # diffusers AutoencoderKLWan: encode returns AutoencoderKLOutput
+                out = self.model.encode(videos, return_dict=True)
+                return out.latent_dist.sample()
             return self.model.encode(videos, self.scale)
 
     def decode(self, zs):
@@ -1030,6 +1071,13 @@ class Wan2_2_VAE:
             if not isinstance(zs, list):
                 raise TypeError("zs should be a list")
             with amp.autocast(dtype=self.dtype):
+                if getattr(self, '_diffusers_vae', False):
+                    return [
+                        self.model.decode(u.unsqueeze(0),
+                                          return_dict=True).sample.float().clamp_(-1,
+                                                                                     1).squeeze(0)
+                        for u in zs
+                    ]
                 return [
                     self.model.decode(u.unsqueeze(0),
                                       self.scale).float().clamp_(-1,
