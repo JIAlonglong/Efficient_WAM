@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-05-26T23:57:26.447822",
+  "config": "configs/robotwin_lerobot.yaml",
+  "checkpoint": "pretrained_models/Motus_robotwin2/mp_rank_00_model_states.pt",
+  "num_inference_steps": 10,
+  "num_eval_batches": 20,
+  "experiments_run": [
+    "2.1",
+    "2.2",
+    "2.3"
+  ],
+  "results": {
+    "2.1_temporal_memory": {
+      "memory_size_1": {
+        "action_mse": 9.22151529788971,
+        "video_mse": 0.04855570644140243,
+        "memory_size": 1
+      },
+      "memory_size_3": {
+        "action_mse": 9.203793859481811,
+        "video_mse": 0.049238598067313434,
+        "memory_size": 3
+      },
+      "memory_size_5": {
+        "action_mse": 7.64950690716505,
+        "video_mse": 0.048561211209744215,
+        "memory_size": 5
+      },
+      "memory_size_10": {
+        "action_mse": 8.5547781676054,
+        "video_mse": 0.049006051104515794,
+        "memory_size": 10
+      }
+    },
+    "2.2_retrieval_comparison": {
+      "visual": {
+        "action_mse": 8.589621299505234,
+        "video_mse": 0.05424322793260217,
+        "retrieval_mode": "visual",
+        "top_k": 5
+      },
+      "motion": {
+        "action_mse": 8.389003237336874,
+        "video_mse": 0.05701469387859106,
+        "retrieval_mode": "motion",
+        "top_k": 5
+      },
+      "hybrid": {
+        "action_mse": 7.865771947801113,
+        "video_mse": 0.051507276762276885,
+        "retrieval_mode": "hybrid",
+        "top_k": 5
+      }
+    },
+    "2.3_size_ablation": {
+      "bank_size_1": {
+        "action_mse": 6.855295491218567,
+        "video_mse": 0.05349292596802115,
+        "memory_bank_size": 1
+      },
+      "bank_size_3": {
+        "action_mse": 8.810285663604736,
+        "video_mse": 0.050836392864584926,
+        "memory_bank_size": 3
+      },
+      "bank_size_5": {
+        "action_mse": 8.08457342684269,
+        "video_mse": 0.05394204538315535,
+        "memory_bank_size": 5
+      },
+      "bank_size_10": {
+        "action_mse": 7.880218744277954,
+        "video_mse": 0.056819519214332107,
+        "memory_bank_size": 10
+      },
+      "bank_size_20": {
+        "action_mse": 7.6692256957292555,
+        "video_mse": 0.04959293780848384,
+        "memory_bank_size": 20
+      }
+    }
+  }
+}

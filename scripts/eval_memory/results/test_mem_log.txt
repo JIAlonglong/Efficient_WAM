@@ -1,0 +1,379 @@
+2026-05-31 11:25:27,916 - INFO - ============================================================
+2026-05-31 11:25:27,917 - INFO - Train ActionMemoryInjector (Exp 3.2 — action-level injection)
+2026-05-31 11:25:27,917 - INFO -   Process rank: 0, device: cuda
+2026-05-31 11:25:27,917 - INFO - ============================================================
+2026-05-31 11:25:28,021 - WARNING - Dataset dir not found: /root/intern/jialongliu/projects/Motus/data/shared_datasets/robotwin_fastwam/robotwin2.0, using /kpfs-intern/jialongliu/projects/Motus/data/robotwin2/robotwin_dataset_v2
+2026-05-31 11:25:37,322 - INFO - Loading Motus model...
+2026-05-31 11:25:37,323 - INFO - Initializing WAN video model...
+2026-05-31 11:25:37,324 - INFO - Dropped unsupported WanModel config keys: {'out_channels', 'num_attention_heads', 'pos_embed_seq_len', 'attention_head_dim', 'added_kv_proj_dim', 'in_channels', '_class_name', 'rope_max_seq_len', 'image_dim', '_diffusers_version'}
+2026-05-31 11:25:37,324 - INFO - WanModel config: dim=3072, num_heads=24, ffn_dim=14336, in_dim=48, out_dim=48, num_layers=30
+The config attributes {'clip_output': False} were passed to AutoencoderKLWan, but are not expected and will be ignored. Please verify your config.json configuration file.
+2026-05-31 11:26:49,564 - INFO - Loaded VAE via diffusers AutoencoderKLWan
+2026-05-31 11:26:49,566 - INFO - WAN Video Model initialized with 4,999,787,712 parameters
+2026-05-31 11:26:49,566 - INFO - Initialized WAN model from config only (no WAN weights loaded)
+2026-05-31 11:26:49,566 - INFO - Initializing VLM (frozen)...
+`torch_dtype` is deprecated! Use `dtype` instead!
+2026-05-31 11:28:25,537 - INFO - Initializing VLM from config...
+2026-05-31 11:28:25,538 - INFO - VLM parameters frozen
+2026-05-31 11:28:25,539 - INFO - VLM kept complete with 28 layers
+2026-05-31 11:28:25,539 - INFO - Model configurations:
+2026-05-31 11:28:25,539 - INFO -   WAN: 24 heads × 128 head_dim = 3072D
+2026-05-31 11:28:25,539 - INFO -   VLM: 16 Q heads, 8 KV heads × 128 head_dim = 2048D
+2026-05-31 11:28:25,539 - INFO - Initializing Action Expert...
+2026-05-31 11:28:30,856 - INFO - Action Expert initialized with 641,527,822 parameters
+2026-05-31 11:28:30,856 - INFO - Initializing Understanding Expert...
+2026-05-31 11:28:36,519 - INFO - Pre-computed grid_sizes: T=3, H=12, W=10
+2026-05-31 11:28:36,520 - INFO - Initialized FlowMatchScheduler for training (video)
+2026-05-31 11:28:36,521 - INFO - Initialized FlowMatchScheduler for training (action)
+2026-05-31 11:28:36,534 - INFO - Motus parameter breakdown:
+2026-05-31 11:28:36,534 - INFO -   Total parameters: 8.02B
+2026-05-31 11:28:36,534 - INFO -   Trainable parameters: 5.89B
+2026-05-31 11:28:36,534 - INFO -   Video Model (WAN): 5.00B
+2026-05-31 11:28:36,534 - INFO -   Action Expert: 641.5M
+2026-05-31 11:28:36,534 - INFO -   VLM (frozen): 2.13B
+2026-05-31 11:28:36,534 - INFO -   Und Expert: 253.5M
+2026-05-31 11:28:36,535 - INFO - Loading checkpoint from pretrained_models/Motus_robotwin2/mp_rank_00_model_states.pt
+2026-05-31 11:28:48,803 - INFO - Loaded checkpoint. Missing: 0, Unexpected: 0
+2026-05-31 11:28:48,863 - INFO - Loading training dataset...
+2026-05-31 11:28:49,806 - INFO - RobotWin dataset initialized:
+2026-05-31 11:28:49,806 - INFO -   Data mode: both
+2026-05-31 11:28:49,806 - INFO -   Task mode: multi
+2026-05-31 11:28:49,806 - INFO -   Global downsample rate: 3
+2026-05-31 11:28:49,806 - INFO -   Video:Action frequency ratio: 2
+2026-05-31 11:28:49,806 - INFO -   Action chunk size: 16
+2026-05-31 11:28:49,806 - INFO -   Video frames to predict: 8
+2026-05-31 11:28:49,806 - INFO -   Total episodes: 0
+2026-05-31 11:28:51,186 - INFO - VLM processor loaded from /kpfs-intern/jialongliu/projects/Motus/pretrained_models/Qwen3-VL-2B-Instruct
+2026-05-31 11:28:51,186 - INFO - Initializing dataset...
+2026-05-31 11:28:51,191 - INFO - Task beat_block_hammer (clean): Found 50 valid episodes
+2026-05-31 11:28:51,193 - INFO - Task blocks_ranking_size (clean): Found 50 valid episodes
+2026-05-31 11:28:51,195 - INFO - Task click_alarmclock (clean): Found 50 valid episodes
+2026-05-31 11:28:51,197 - INFO - Task click_bell (clean): Found 50 valid episodes
+2026-05-31 11:28:51,200 - INFO - Task grab_roller (clean): Found 49 valid episodes
+2026-05-31 11:28:51,202 - INFO - Task handover_mic (clean): Found 50 valid episodes
+2026-05-31 11:28:51,205 - INFO - Task move_pillbottle_pad (clean): Found 50 valid episodes
+2026-05-31 11:28:51,207 - INFO - Task move_playingcard_away (clean): Found 50 valid episodes
+2026-05-31 11:28:51,209 - INFO - Task open_microwave (clean): Found 50 valid episodes
+2026-05-31 11:28:51,211 - INFO - Task pick_dual_bottles (clean): Found 50 valid episodes
+2026-05-31 11:28:51,213 - INFO - Task place_bread_basket (clean): Found 50 valid episodes
+2026-05-31 11:28:51,215 - INFO - Task place_bread_skillet (clean): Found 50 valid episodes
+2026-05-31 11:28:51,217 - INFO - Task place_burger_fries (clean): Found 50 valid episodes
+2026-05-31 11:28:51,221 - INFO - Task place_can_basket (clean): Found 49 valid episodes
+2026-05-31 11:28:51,224 - INFO - Task place_container_plate (clean): Found 50 valid episodes
+2026-05-31 11:28:51,227 - INFO - Task place_empty_cup (clean): Found 50 valid episodes
+2026-05-31 11:28:51,229 - INFO - Task place_object_basket (clean): Found 50 valid episodes
+2026-05-31 11:28:51,232 - INFO - Task place_object_scale (clean): Found 50 valid episodes
+2026-05-31 11:28:51,234 - INFO - Task place_object_stand (clean): Found 50 valid episodes
+2026-05-31 11:28:51,236 - INFO - Task place_phone_stand (clean): Found 50 valid episodes
+2026-05-31 11:28:51,238 - INFO - Task place_shoe (clean): Found 48 valid episodes
+2026-05-31 11:28:51,240 - INFO - Task put_bottles_dustbin (clean): Found 50 valid episodes
+2026-05-31 11:28:51,242 - INFO - Task scan_object (clean): Found 50 valid episodes
+2026-05-31 11:28:51,244 - INFO - Task shake_bottle (clean): Found 50 valid episodes
+2026-05-31 11:28:51,246 - INFO - Task stack_bowls_two (clean): Found 50 valid episodes
+2026-05-31 11:28:51,248 - INFO - Task adjust_bottle (clean): Found 49 valid episodes
+2026-05-31 11:28:51,250 - INFO - Task blocks_ranking_rgb (clean): Found 50 valid episodes
+2026-05-31 11:28:51,252 - INFO - Task dump_bin_bigbin (clean): Found 50 valid episodes
+2026-05-31 11:28:51,255 - INFO - Task handover_block (clean): Found 50 valid episodes
+2026-05-31 11:28:51,257 - INFO - Task hanging_mug (clean): Found 50 valid episodes
+2026-05-31 11:28:51,259 - INFO - Task lift_pot (clean): Found 50 valid episodes
+2026-05-31 11:28:51,261 - INFO - Task move_can_pot (clean): Found 50 valid episodes
+2026-05-31 11:28:51,263 - INFO - Task move_stapler_pad (clean): Found 49 valid episodes
+2026-05-31 11:28:51,265 - INFO - Task open_laptop (clean): Found 50 valid episodes
+2026-05-31 11:28:51,267 - INFO - Task pick_diverse_bottles (clean): Found 50 valid episodes
+2026-05-31 11:28:51,269 - INFO - Task place_a2b_left (clean): Found 50 valid episodes
+2026-05-31 11:28:51,271 - INFO - Task place_a2b_right (clean): Found 50 valid episodes
+2026-05-31 11:28:51,273 - INFO - Task place_cans_plasticbox (clean): Found 50 valid episodes
+2026-05-31 11:28:51,275 - INFO - Task place_dual_shoes (clean): Found 45 valid episodes
+2026-05-31 11:28:51,277 - INFO - Task place_fan (clean): Found 50 valid episodes
+2026-05-31 11:28:51,279 - INFO - Task place_mouse_pad (clean): Found 50 valid episodes
+2026-05-31 11:28:51,281 - INFO - Task press_stapler (clean): Found 50 valid episodes
+2026-05-31 11:28:51,283 - INFO - Task put_object_cabinet (clean): Found 50 valid episodes
+2026-05-31 11:28:51,285 - INFO - Task rotate_qrcode (clean): Found 47 valid episodes
+2026-05-31 11:28:51,287 - INFO - Task shake_bottle_horizontally (clean): Found 49 valid episodes
+2026-05-31 11:28:51,289 - INFO - Task stack_blocks_three (clean): Found 50 valid episodes
+2026-05-31 11:28:51,291 - INFO - Task stack_blocks_two (clean): Found 50 valid episodes
+2026-05-31 11:28:51,293 - INFO - Task stack_bowls_three (clean): Found 50 valid episodes
+2026-05-31 11:28:51,295 - INFO - Task stamp_seal (clean): Found 50 valid episodes
+2026-05-31 11:28:51,297 - INFO - Task turn_switch (clean): Found 47 valid episodes
+2026-05-31 11:28:51,313 - INFO - Task beat_block_hammer (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,330 - INFO - Task blocks_ranking_size (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,344 - INFO - Task click_bell (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,358 - INFO - Task grab_roller (randomized): Found 494 valid episodes
+2026-05-31 11:28:51,372 - INFO - Task hanging_mug (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,387 - INFO - Task move_can_pot (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,401 - INFO - Task pick_diverse_bottles (randomized): Found 496 valid episodes
+2026-05-31 11:28:51,415 - INFO - Task pick_dual_bottles (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,435 - INFO - Task place_a2b_left (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,449 - INFO - Task place_bread_basket (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,463 - INFO - Task place_bread_skillet (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,477 - INFO - Task place_burger_fries (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,492 - INFO - Task place_cans_plasticbox (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,506 - INFO - Task place_container_plate (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,520 - INFO - Task place_fan (randomized): Found 496 valid episodes
+2026-05-31 11:28:51,534 - INFO - Task place_object_basket (randomized): Found 485 valid episodes
+2026-05-31 11:28:51,549 - INFO - Task place_object_scale (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,564 - INFO - Task place_object_stand (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,601 - INFO - Task press_stapler (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,618 - INFO - Task put_bottles_dustbin (randomized): Found 473 valid episodes
+2026-05-31 11:28:51,632 - INFO - Task scan_object (randomized): Found 497 valid episodes
+2026-05-31 11:28:51,646 - INFO - Task stamp_seal (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,663 - INFO - Task turn_switch (randomized): Found 471 valid episodes
+2026-05-31 11:28:51,676 - INFO - Task adjust_bottle (randomized): Found 489 valid episodes
+2026-05-31 11:28:51,692 - INFO - Task blocks_ranking_rgb (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,706 - INFO - Task click_alarmclock (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,720 - INFO - Task dump_bin_bigbin (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,734 - INFO - Task handover_block (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,749 - INFO - Task handover_mic (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,763 - INFO - Task lift_pot (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,777 - INFO - Task move_pillbottle_pad (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,791 - INFO - Task move_playingcard_away (randomized): Found 498 valid episodes
+2026-05-31 11:28:51,806 - INFO - Task move_stapler_pad (randomized): Found 491 valid episodes
+2026-05-31 11:28:51,822 - INFO - Task open_laptop (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,836 - INFO - Task open_microwave (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,850 - INFO - Task place_a2b_right (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,864 - INFO - Task place_can_basket (randomized): Found 488 valid episodes
+2026-05-31 11:28:51,877 - INFO - Task place_dual_shoes (randomized): Found 455 valid episodes
+2026-05-31 11:28:51,891 - INFO - Task place_empty_cup (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,905 - INFO - Task place_mouse_pad (randomized): Found 494 valid episodes
+2026-05-31 11:28:51,921 - INFO - Task place_phone_stand (randomized): Found 500 valid episodes
+2026-05-31 11:28:51,935 - INFO - Task place_shoe (randomized): Found 499 valid episodes
+2026-05-31 11:28:51,951 - INFO - Task put_object_cabinet (randomized): Found 497 valid episodes
+2026-05-31 11:28:51,965 - INFO - Task rotate_qrcode (randomized): Found 472 valid episodes
+2026-05-31 11:28:51,979 - INFO - Task shake_bottle (randomized): Found 488 valid episodes
+2026-05-31 11:28:51,993 - INFO - Task shake_bottle_horizontally (randomized): Found 486 valid episodes
+2026-05-31 11:28:52,007 - INFO - Task stack_blocks_three (randomized): Found 499 valid episodes
+2026-05-31 11:28:52,023 - INFO - Task stack_blocks_two (randomized): Found 500 valid episodes
+2026-05-31 11:28:52,038 - INFO - Task stack_bowls_three (randomized): Found 500 valid episodes
+2026-05-31 11:28:52,052 - INFO - Task stack_bowls_two (randomized): Found 500 valid episodes
+2026-05-31 11:28:52,052 - INFO - Multi-task dataset with 50 tasks:
+2026-05-31 11:28:52,052 - INFO -   beat_block_hammer: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   blocks_ranking_size: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   click_alarmclock: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   click_bell: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   grab_roller: 543 episodes
+2026-05-31 11:28:52,052 - INFO -   handover_mic: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   move_pillbottle_pad: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   move_playingcard_away: 548 episodes
+2026-05-31 11:28:52,052 - INFO -   open_microwave: 549 episodes
+2026-05-31 11:28:52,052 - INFO -   pick_dual_bottles: 549 episodes
+2026-05-31 11:28:52,052 - INFO -   place_bread_basket: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_bread_skillet: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_burger_fries: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_can_basket: 537 episodes
+2026-05-31 11:28:52,052 - INFO -   place_container_plate: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_empty_cup: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_object_basket: 535 episodes
+2026-05-31 11:28:52,052 - INFO -   place_object_scale: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_object_stand: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_phone_stand: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_shoe: 547 episodes
+2026-05-31 11:28:52,052 - INFO -   put_bottles_dustbin: 523 episodes
+2026-05-31 11:28:52,052 - INFO -   scan_object: 547 episodes
+2026-05-31 11:28:52,052 - INFO -   shake_bottle: 538 episodes
+2026-05-31 11:28:52,052 - INFO -   stack_bowls_two: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   adjust_bottle: 538 episodes
+2026-05-31 11:28:52,052 - INFO -   blocks_ranking_rgb: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   dump_bin_bigbin: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   handover_block: 549 episodes
+2026-05-31 11:28:52,052 - INFO -   hanging_mug: 549 episodes
+2026-05-31 11:28:52,052 - INFO -   lift_pot: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   move_can_pot: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   move_stapler_pad: 540 episodes
+2026-05-31 11:28:52,052 - INFO -   open_laptop: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   pick_diverse_bottles: 546 episodes
+2026-05-31 11:28:52,052 - INFO -   place_a2b_left: 549 episodes
+2026-05-31 11:28:52,052 - INFO -   place_a2b_right: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_cans_plasticbox: 550 episodes
+2026-05-31 11:28:52,052 - INFO -   place_dual_shoes: 500 episodes
+2026-05-31 11:28:52,052 - INFO -   place_fan: 546 episodes
+2026-05-31 11:28:52,053 - INFO -   place_mouse_pad: 544 episodes
+2026-05-31 11:28:52,053 - INFO -   press_stapler: 549 episodes
+2026-05-31 11:28:52,053 - INFO -   put_object_cabinet: 547 episodes
+2026-05-31 11:28:52,053 - INFO -   rotate_qrcode: 519 episodes
+2026-05-31 11:28:52,053 - INFO -   shake_bottle_horizontally: 535 episodes
+2026-05-31 11:28:52,053 - INFO -   stack_blocks_three: 549 episodes
+2026-05-31 11:28:52,053 - INFO -   stack_blocks_two: 550 episodes
+2026-05-31 11:28:52,053 - INFO -   stack_bowls_three: 550 episodes
+2026-05-31 11:28:52,053 - INFO -   stamp_seal: 550 episodes
+2026-05-31 11:28:52,053 - INFO -   turn_switch: 518 episodes
+2026-05-31 11:28:52,617 - INFO - RobotWin dataset initialized:
+2026-05-31 11:28:52,617 - INFO -   Data mode: both
+2026-05-31 11:28:52,617 - INFO -   Task mode: multi
+2026-05-31 11:28:52,617 - INFO -   Global downsample rate: 3
+2026-05-31 11:28:52,617 - INFO -   Video:Action frequency ratio: 2
+2026-05-31 11:28:52,617 - INFO -   Action chunk size: 16
+2026-05-31 11:28:52,617 - INFO -   Video frames to predict: 8
+2026-05-31 11:28:52,617 - INFO -   Total episodes: 0
+2026-05-31 11:28:53,503 - INFO - VLM processor loaded from /kpfs-intern/jialongliu/projects/Motus/pretrained_models/Qwen3-VL-2B-Instruct
+2026-05-31 11:28:53,503 - INFO - Initializing dataset...
+2026-05-31 11:28:53,508 - INFO - Task beat_block_hammer (clean): Found 50 valid episodes
+2026-05-31 11:28:53,510 - INFO - Task blocks_ranking_size (clean): Found 50 valid episodes
+2026-05-31 11:28:53,512 - INFO - Task click_alarmclock (clean): Found 50 valid episodes
+2026-05-31 11:28:53,514 - INFO - Task click_bell (clean): Found 50 valid episodes
+2026-05-31 11:28:53,516 - INFO - Task grab_roller (clean): Found 49 valid episodes
+2026-05-31 11:28:53,518 - INFO - Task handover_mic (clean): Found 50 valid episodes
+2026-05-31 11:28:53,521 - INFO - Task move_pillbottle_pad (clean): Found 50 valid episodes
+2026-05-31 11:28:53,523 - INFO - Task move_playingcard_away (clean): Found 50 valid episodes
+2026-05-31 11:28:53,525 - INFO - Task open_microwave (clean): Found 50 valid episodes
+2026-05-31 11:28:53,527 - INFO - Task pick_dual_bottles (clean): Found 50 valid episodes
+2026-05-31 11:28:53,529 - INFO - Task place_bread_basket (clean): Found 50 valid episodes
+2026-05-31 11:28:53,532 - INFO - Task place_bread_skillet (clean): Found 50 valid episodes
+2026-05-31 11:28:53,534 - INFO - Task place_burger_fries (clean): Found 50 valid episodes
+2026-05-31 11:28:53,536 - INFO - Task place_can_basket (clean): Found 49 valid episodes
+2026-05-31 11:28:53,538 - INFO - Task place_container_plate (clean): Found 50 valid episodes
+2026-05-31 11:28:53,540 - INFO - Task place_empty_cup (clean): Found 50 valid episodes
+2026-05-31 11:28:53,543 - INFO - Task place_object_basket (clean): Found 50 valid episodes
+2026-05-31 11:28:53,545 - INFO - Task place_object_scale (clean): Found 50 valid episodes
+2026-05-31 11:28:53,547 - INFO - Task place_object_stand (clean): Found 50 valid episodes
+2026-05-31 11:28:53,549 - INFO - Task place_phone_stand (clean): Found 50 valid episodes
+2026-05-31 11:28:53,551 - INFO - Task place_shoe (clean): Found 48 valid episodes
+2026-05-31 11:28:53,553 - INFO - Task put_bottles_dustbin (clean): Found 50 valid episodes
+2026-05-31 11:28:53,555 - INFO - Task scan_object (clean): Found 50 valid episodes
+2026-05-31 11:28:53,557 - INFO - Task shake_bottle (clean): Found 50 valid episodes
+2026-05-31 11:28:53,559 - INFO - Task stack_bowls_two (clean): Found 50 valid episodes
+2026-05-31 11:28:53,561 - INFO - Task adjust_bottle (clean): Found 49 valid episodes
+2026-05-31 11:28:53,563 - INFO - Task blocks_ranking_rgb (clean): Found 50 valid episodes
+2026-05-31 11:28:53,566 - INFO - Task dump_bin_bigbin (clean): Found 50 valid episodes
+2026-05-31 11:28:53,568 - INFO - Task handover_block (clean): Found 50 valid episodes
+2026-05-31 11:28:53,570 - INFO - Task hanging_mug (clean): Found 50 valid episodes
+2026-05-31 11:28:53,572 - INFO - Task lift_pot (clean): Found 50 valid episodes
+2026-05-31 11:28:53,574 - INFO - Task move_can_pot (clean): Found 50 valid episodes
+2026-05-31 11:28:53,576 - INFO - Task move_stapler_pad (clean): Found 49 valid episodes
+2026-05-31 11:28:53,578 - INFO - Task open_laptop (clean): Found 50 valid episodes
+2026-05-31 11:28:53,581 - INFO - Task pick_diverse_bottles (clean): Found 50 valid episodes
+2026-05-31 11:28:53,583 - INFO - Task place_a2b_left (clean): Found 50 valid episodes
+2026-05-31 11:28:53,585 - INFO - Task place_a2b_right (clean): Found 50 valid episodes
+2026-05-31 11:28:53,587 - INFO - Task place_cans_plasticbox (clean): Found 50 valid episodes
+2026-05-31 11:28:53,589 - INFO - Task place_dual_shoes (clean): Found 45 valid episodes
+2026-05-31 11:28:53,591 - INFO - Task place_fan (clean): Found 50 valid episodes
+2026-05-31 11:28:53,593 - INFO - Task place_mouse_pad (clean): Found 50 valid episodes
+2026-05-31 11:28:53,595 - INFO - Task press_stapler (clean): Found 50 valid episodes
+2026-05-31 11:28:53,597 - INFO - Task put_object_cabinet (clean): Found 50 valid episodes
+2026-05-31 11:28:53,599 - INFO - Task rotate_qrcode (clean): Found 47 valid episodes
+2026-05-31 11:28:53,601 - INFO - Task shake_bottle_horizontally (clean): Found 49 valid episodes
+2026-05-31 11:28:53,603 - INFO - Task stack_blocks_three (clean): Found 50 valid episodes
+2026-05-31 11:28:53,606 - INFO - Task stack_blocks_two (clean): Found 50 valid episodes
+2026-05-31 11:28:53,608 - INFO - Task stack_bowls_three (clean): Found 50 valid episodes
+2026-05-31 11:28:53,610 - INFO - Task stamp_seal (clean): Found 50 valid episodes
+2026-05-31 11:28:53,612 - INFO - Task turn_switch (clean): Found 47 valid episodes
+2026-05-31 11:28:53,631 - INFO - Task beat_block_hammer (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,645 - INFO - Task blocks_ranking_size (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,659 - INFO - Task click_bell (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,674 - INFO - Task grab_roller (randomized): Found 494 valid episodes
+2026-05-31 11:28:53,688 - INFO - Task hanging_mug (randomized): Found 499 valid episodes
+2026-05-31 11:28:53,702 - INFO - Task move_can_pot (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,716 - INFO - Task pick_diverse_bottles (randomized): Found 496 valid episodes
+2026-05-31 11:28:53,730 - INFO - Task pick_dual_bottles (randomized): Found 499 valid episodes
+2026-05-31 11:28:53,744 - INFO - Task place_a2b_left (randomized): Found 499 valid episodes
+2026-05-31 11:28:53,758 - INFO - Task place_bread_basket (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,772 - INFO - Task place_bread_skillet (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,787 - INFO - Task place_burger_fries (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,802 - INFO - Task place_cans_plasticbox (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,816 - INFO - Task place_container_plate (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,830 - INFO - Task place_fan (randomized): Found 496 valid episodes
+2026-05-31 11:28:53,844 - INFO - Task place_object_basket (randomized): Found 485 valid episodes
+2026-05-31 11:28:53,858 - INFO - Task place_object_scale (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,872 - INFO - Task place_object_stand (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,886 - INFO - Task press_stapler (randomized): Found 499 valid episodes
+2026-05-31 11:28:53,899 - INFO - Task put_bottles_dustbin (randomized): Found 473 valid episodes
+2026-05-31 11:28:53,913 - INFO - Task scan_object (randomized): Found 497 valid episodes
+2026-05-31 11:28:53,927 - INFO - Task stamp_seal (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,940 - INFO - Task turn_switch (randomized): Found 471 valid episodes
+2026-05-31 11:28:53,954 - INFO - Task adjust_bottle (randomized): Found 489 valid episodes
+2026-05-31 11:28:53,968 - INFO - Task blocks_ranking_rgb (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,982 - INFO - Task click_alarmclock (randomized): Found 500 valid episodes
+2026-05-31 11:28:53,997 - INFO - Task dump_bin_bigbin (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,011 - INFO - Task handover_block (randomized): Found 499 valid episodes
+2026-05-31 11:28:54,025 - INFO - Task handover_mic (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,039 - INFO - Task lift_pot (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,053 - INFO - Task move_pillbottle_pad (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,067 - INFO - Task move_playingcard_away (randomized): Found 498 valid episodes
+2026-05-31 11:28:54,081 - INFO - Task move_stapler_pad (randomized): Found 491 valid episodes
+2026-05-31 11:28:54,095 - INFO - Task open_laptop (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,109 - INFO - Task open_microwave (randomized): Found 499 valid episodes
+2026-05-31 11:28:54,126 - INFO - Task place_a2b_right (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,140 - INFO - Task place_can_basket (randomized): Found 488 valid episodes
+2026-05-31 11:28:54,154 - INFO - Task place_dual_shoes (randomized): Found 455 valid episodes
+2026-05-31 11:28:54,168 - INFO - Task place_empty_cup (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,182 - INFO - Task place_mouse_pad (randomized): Found 494 valid episodes
+2026-05-31 11:28:54,198 - INFO - Task place_phone_stand (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,212 - INFO - Task place_shoe (randomized): Found 499 valid episodes
+2026-05-31 11:28:54,226 - INFO - Task put_object_cabinet (randomized): Found 497 valid episodes
+2026-05-31 11:28:54,239 - INFO - Task rotate_qrcode (randomized): Found 472 valid episodes
+2026-05-31 11:28:54,253 - INFO - Task shake_bottle (randomized): Found 488 valid episodes
+2026-05-31 11:28:54,267 - INFO - Task shake_bottle_horizontally (randomized): Found 486 valid episodes
+2026-05-31 11:28:54,281 - INFO - Task stack_blocks_three (randomized): Found 499 valid episodes
+2026-05-31 11:28:54,295 - INFO - Task stack_blocks_two (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,309 - INFO - Task stack_bowls_three (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,323 - INFO - Task stack_bowls_two (randomized): Found 500 valid episodes
+2026-05-31 11:28:54,323 - INFO - Multi-task dataset with 50 tasks:
+2026-05-31 11:28:54,324 - INFO -   beat_block_hammer: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   blocks_ranking_size: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   click_alarmclock: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   click_bell: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   grab_roller: 543 episodes
+2026-05-31 11:28:54,324 - INFO -   handover_mic: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   move_pillbottle_pad: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   move_playingcard_away: 548 episodes
+2026-05-31 11:28:54,324 - INFO -   open_microwave: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   pick_dual_bottles: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   place_bread_basket: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_bread_skillet: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_burger_fries: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_can_basket: 537 episodes
+2026-05-31 11:28:54,324 - INFO -   place_container_plate: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_empty_cup: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_object_basket: 535 episodes
+2026-05-31 11:28:54,324 - INFO -   place_object_scale: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_object_stand: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_phone_stand: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_shoe: 547 episodes
+2026-05-31 11:28:54,324 - INFO -   put_bottles_dustbin: 523 episodes
+2026-05-31 11:28:54,324 - INFO -   scan_object: 547 episodes
+2026-05-31 11:28:54,324 - INFO -   shake_bottle: 538 episodes
+2026-05-31 11:28:54,324 - INFO -   stack_bowls_two: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   adjust_bottle: 538 episodes
+2026-05-31 11:28:54,324 - INFO -   blocks_ranking_rgb: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   dump_bin_bigbin: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   handover_block: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   hanging_mug: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   lift_pot: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   move_can_pot: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   move_stapler_pad: 540 episodes
+2026-05-31 11:28:54,324 - INFO -   open_laptop: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   pick_diverse_bottles: 546 episodes
+2026-05-31 11:28:54,324 - INFO -   place_a2b_left: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   place_a2b_right: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_cans_plasticbox: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   place_dual_shoes: 500 episodes
+2026-05-31 11:28:54,324 - INFO -   place_fan: 546 episodes
+2026-05-31 11:28:54,324 - INFO -   place_mouse_pad: 544 episodes
+2026-05-31 11:28:54,324 - INFO -   press_stapler: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   put_object_cabinet: 547 episodes
+2026-05-31 11:28:54,324 - INFO -   rotate_qrcode: 519 episodes
+2026-05-31 11:28:54,324 - INFO -   shake_bottle_horizontally: 535 episodes
+2026-05-31 11:28:54,324 - INFO -   stack_blocks_three: 549 episodes
+2026-05-31 11:28:54,324 - INFO -   stack_blocks_two: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   stack_bowls_three: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   stamp_seal: 550 episodes
+2026-05-31 11:28:54,324 - INFO -   turn_switch: 518 episodes
+2026-05-31 11:28:54,355 - INFO - Trainable parameters: 3,152,897
+2026-05-31 11:28:54,355 - INFO - Training: 1 epochs, 5 batches/epoch
+2026-05-31 11:28:54,355 - INFO - Evaluation: every 3 steps, 2 batches
+2026-05-31 11:28:54,356 - INFO - Checkpoints: keep last 3 + best
+2026-05-31 11:28:54,356 - INFO - Distributed: False, num_processes: 1
+2026-05-31 11:28:54,356 - INFO - Pre-computing VLM features for all training batches...
+2026-05-31 11:29:00,095 - INFO - VLM cache ready: 5 batches cached
+2026-05-31 11:29:00,096 - INFO - Pre-computing VLM features for validation batches...
+2026-05-31 11:29:02,287 - INFO - Val VLM cache ready: 2 batches cached
+2026-05-31 11:29:09,095 - INFO -   [Step 3] Val MSE: 0.418755, lr: 1.00e-04
+2026-05-31 11:29:09,137 - INFO -   ** New best: 0.418755 at step 3 **
+2026-05-31 11:29:11,750 - INFO - Epoch 1/1: train_loss=0.076760
+2026-05-31 11:29:13,622 - INFO - 
+============================================================
+2026-05-31 11:29:13,622 - INFO - Training Complete
+2026-05-31 11:29:13,622 - INFO - Total steps: 5
+2026-05-31 11:29:13,622 - INFO - Best Val MSE: 0.117987 (step 5)
+2026-05-31 11:29:13,622 - INFO - Best checkpoint: scripts/eval_memory/results/test_train_full/injector_best.pt
+2026-05-31 11:29:13,622 - INFO - Recent checkpoints: ['scripts/eval_memory/results/test_train_full/injector_step000003.pt', 'scripts/eval_memory/results/test_train_full/injector_step000005.pt']
+2026-05-31 11:29:13,622 - INFO - ============================================================

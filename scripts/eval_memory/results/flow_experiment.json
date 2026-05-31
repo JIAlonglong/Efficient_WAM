@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-05-27T03:21:05.406078",
+  "config": "../../configs/robotwin_lerobot.yaml",
+  "checkpoint": "../../pretrained_models/Motus_robotwin2/mp_rank_00_model_states.pt",
+  "num_inference_steps": 10,
+  "num_eval_batches": 20,
+  "bank_size": 5,
+  "top_k": 5,
+  "results": {
+    "frame_diff_motion": {
+      "action_mse": 7.0654439017176625,
+      "video_mse": 0.04616234553977847,
+      "extractor": "frame_diff",
+      "retrieval_mode": "motion",
+      "top_k": 5,
+      "bank_size": 5
+    },
+    "frame_diff_hybrid": {
+      "action_mse": 8.553797268867493,
+      "video_mse": 0.045826304145157336,
+      "extractor": "frame_diff",
+      "retrieval_mode": "hybrid",
+      "top_k": 5,
+      "bank_size": 5
+    },
+    "optical_flow_motion": {
+      "action_mse": 7.951173217594624,
+      "video_mse": 0.04877903936430812,
+      "extractor": "optical_flow",
+      "retrieval_mode": "motion",
+      "top_k": 5,
+      "bank_size": 5
+    },
+    "optical_flow_hybrid": {
+      "action_mse": 8.341738925874234,
+      "video_mse": 0.05815497748553753,
+      "extractor": "optical_flow",
+      "retrieval_mode": "hybrid",
+      "top_k": 5,
+      "bank_size": 5
+    },
+    "visual_only": {
+      "action_mse": 7.3372773945331575,
+      "video_mse": 0.05328858643770218,
+      "extractor": "none",
+      "retrieval_mode": "visual",
+      "top_k": 5,
+      "bank_size": 5
+    }
+  }
+}
