@@ -14,11 +14,26 @@ __pycache__/
 *.safetensors
 data/processed*
 data/raw*
+data/bridge*
+data/npz_action/
+data/robotwin2/raw_dataset/
+data/robotwin2/robotwin_dataset/
+data/robotwin2/robotwin_dataset_v2/
+data/shared_datasets
 MemFlow/
 output/
 outputs/
 wandb/*
 slurm-*.out
+
+# CodeGraph index
+.codegraph/
+
+# Pretrained models
+pretrained_models/
+
+# WAN model directory
+wan
 
 # C extensions
 *.so
